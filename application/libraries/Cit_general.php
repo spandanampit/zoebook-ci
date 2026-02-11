@@ -1,0 +1,1242 @@
+<?php
+defined('BASEPATH') || exit('No direct script access allowed');
+
+/**
+ * Description of Extended General Library
+ *
+ * @category libraries
+ *
+ * @package libraries
+ *
+ * @module General
+ *
+ * @class Cit_general.php
+ *
+ * @path application\libraries\Cit_general.php
+ *
+ * @version 4.0
+ *
+ * @author CIT Dev Team
+ *
+ * @since 01.08.2016
+ */
+include_once(APPPATH . 'libraries' . DS . 'General.php');
+
+class Cit_general extends General
+{
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
+    /**
+     * Code will be generated dynamically
+     * Please do not write or change the content below this line
+     * Five hashes must be there on either side of string.
+     */
+    #####GENERATED_CUSTOM_FUNCTION_START#####
+
+
+
+    public function generateRandomPassword($input_params = array())
+    {
+        try {
+            $length = 10;
+            $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $characters_length = strlen($characters);
+            $random_string = '';
+            for ($i = 0; $i < $length; $i++) {
+                $random_string .= $characters[rand(0, $characters_length - 1)];
+            }
+        } catch (Exception $e) {
+            $random_string = '';
+        }
+        return $random_string;
+    }
+
+    public function fetchn_upload_social_image($input_params)
+    {
+        if (!empty($input_params['profile_image'])) {
+            #$fileName = basename($input_params['profile_image']);
+            #$fileName = preg_replace("/[^a-zA-Z0-9]+/", "", basename($input_params['profile_image']));
+            $profile_image_social = 'social_profile_image_' . time() . '.png';
+
+            $upload_path = $this->CI->config->item('upload_path') . 'profile_image/' . $profile_image_social;
+
+            if ($input_params['facebook_id'] != '') {
+                $input_params['profile_image'] = 'http://graph.facebook.com/' . $input_params['facebook_id'] . '/picture?type=large&redirect=true&width=250&height=250';
+            }
+
+            $data = file_get_contents($input_params['profile_image']);
+
+            $fp = fopen($upload_path, "wb");
+            if ($fp) {
+                fwrite($fp, $data);
+                fclose($fp);
+
+                /*upload to aws*/
+                $file_path = "profile_image";
+                $file_name = $profile_image_social;
+                $file_tmp_path = $upload_path;
+                $response = $this->uploadAWSData($file_tmp_path, $file_path, $file_name);
+                if ($response) {
+                    $file_url =  $response['ObjectURL'];
+                    unlink($file_tmp_path);
+                    /*remove existing local files*/
+                }
+                /*AWS upload end*/
+            }
+        } else {
+            $profile_image_social = "";
+        }
+        $return_arr[0]["profile_image_social"] = $profile_image_social;
+        return $return_arr;
+    }
+
+    public function checkUserFollowing($value = '', $dataArr = array())
+    {
+        $ret_value = 'No';
+        if (!empty($value) && $value != '') {
+            if ($value == 'Accepted') {
+                $ret_value = 'Yes';
+            } elseif ($value == 'Pending') {
+                $ret_value = 'Pending';
+            }
+        }
+        return $ret_value;
+    }
+
+    public function setdiplayprofileurl($id = '', $name = '')
+    {
+        $dispname = preg_replace("/\s+/", "", $name);
+
+        $url = $this->CI->config->item('site_url') . 'user-profile-' . $id . '-' . strtolower($dispname) . '.html';
+        return $url;
+    }
+
+    public function get_user_suggestions()
+    {
+        $this->CI->load->model('cit_api_model');
+
+        $params = array(
+            "user_id" => $this->CI->session->userdata('iUserId')
+        );
+        $api_suggestions_list = $this->CI->cit_api_model->callAPI("suggestions", $params);
+
+        $suggestions_list = $api_suggestions_list['data'];
+
+        return $suggestions_list;
+    }
+
+    public function selectfetch2($result_data, $assoc_fields = '', $assoc_fields2 = '', $assoc_fields3 = '')
+    {
+        $data = array();
+        if (count($result_data) > 0) {
+            foreach ($result_data as $key => $row) {
+                if ($assoc_fields3 != '') {
+                    $data[$row[$assoc_fields]][$row[$assoc_fields2]][$row[$assoc_fields3]][] = $row;
+                } else if ($assoc_fields2 != '') {
+                    $data[$row[$assoc_fields]][$row[$assoc_fields2]][] = $row;
+                } else {
+                    $data[$row[$assoc_fields]][] = $row;
+                }
+            }
+        }
+        return $data;
+    }
+
+    public function generateactivation_url($value = '', $data_arr = array())
+    {
+        /**
+         * @param $value contains original value of the field.
+         * 
+         * @param $data_arr array containing all the input parameters.
+         * 
+         * @return $ret_val, it can be integer or string, which contains modified value of the field.
+         * 
+         * Example:
+         * 
+         * $ret_val = strtolower($value);
+         * 
+         * return $ret_val;
+         */
+        $get_url = $this->CI->config->item('site_url') . 'activationurl-' . base64_encode($value) . '.html';
+
+        return $get_url;
+    }
+
+    public function setpostdetailurl($value = '', $data_arr = array())
+    {
+        $getval = @explode('@@', $value);
+
+        $enc_id = $this->CI->general->encryptDataMethod($getval[1], "cit");
+        $url = $this->CI->config->item('site_url') . 'post-detail-' . $enc_id . '.html';
+
+        return $url;
+    }
+
+    public function getTypefromextention($value = '', $data_arr = array())
+    {
+        $type = "Image";
+        if (preg_match('/^.*\.(mp4|mov|wmv|avi|3gp|webp)$/i', $value)) {
+            $type = "Video";
+        }
+
+        return $type;
+    }
+
+    public function extractImagefromVideo($value = '', $data_arr = array())
+    {
+        $ret_val = '';
+        if (end(explode(".", $data_arr['cover_photo'])) == "mp4") {
+            $video = $data_arr['cover_photo'];
+
+            $thumbnail_path = $this->config->item('upload_path') . 'covervideo_thumbnail/';
+            $this->general->createUploadFolderIfNotExists('covervideo_thumbnail');
+            $second = 1;
+            $thumbname = uniqid() . time() . '.jpg';
+            $image  = $thumbnail_path . $thumbname;
+
+            $thumb_file_path = $image;
+
+            if (file_exists($thumb_file_path)) {
+                $file_path = "covervideo_thumbnail";
+                $file_name = $thumbname;
+                $file_tmp_path = $thumb_file_path;
+                $response = $this->general->uploadAWSData($file_tmp_path, $file_path, $file_name);
+
+                $video_thumbnail = $thumbname;
+                unlink($thumbnail_path . $thumbname);
+            }
+
+            $ret_val = $thumbname;
+        }
+
+        return $ret_val;
+    }
+
+    public function getFileHieght($value = '', $data_arr = array())
+    {
+        /**
+         * @param $value contains original value of the field.
+         * 
+         * @param $data_arr array containing all the input parameters.
+         * 
+         * @return $ret_val, it can be integer or string, which contains modified value of the field.
+         * 
+         * Example:
+         * 
+         * $ret_val = strtolower($value);
+         * 
+         * return $ret_val;
+         */
+        /*print_r($value);
+ die();*/
+
+        /*return $ret_val;*/
+        $return_data['width'] = null;
+        $return_data['height'] = null;
+        //$return_data['excaxt_folder_path'] = 
+        $media_type_arr = explode("/", $_FILES['upload_file']['type']);
+        $ext = end(explode("/",$_FILES['upload_file']['name']));
+        $video_ext = ['mp4', 'mov', 'wmv', 'avi', '3gp', 'webp'];
+        $image_ext = ['jpg', 'jpeg', 'png', 'gif'];
+        $is_video = in_array(strtolower($ext), $video_ext);
+        $is_image = in_array(strtolower($ext), $image_ext);
+        $media_type = $media_type_arr[0];
+        if (strtolower($media_type) == 'image' || strtolower($_REQUEST['file_type']) == 'image' || $is_image) {
+            if (strtolower($_REQUEST['platform']) == 'ios') {
+                $sizes = @getimagesize($_FILES["upload_file"]["tmp_name"]);
+                $return_data['width'] = $sizes[0];
+                $return_data['height'] = $sizes[1];
+                $exif = exif_read_data($_FILES["upload_file"]["tmp_name"]);
+                if (isset($exif["Orientation"])) {
+                    if ($exif["Orientation"] == 6) {
+                        $newWidth = $sizes[1];
+                        $newHeight = $sizes[0];
+                        $return_data['width'] = $newWidth;
+                        $return_data['height'] = $newHeight;
+                    }
+                }
+            } else {
+                $fileinfo = @getimagesize($_FILES["upload_file"]["tmp_name"]);
+                $return_data['width'] = $fileinfo[0];
+                $return_data['height'] = $fileinfo[1];
+            }
+        } elseif (strtolower($media_type) == 'video' || strtolower($_REQUEST['file_type']) == 'video' || $is_video) {
+            /*$exec = 'ffmpeg -i ' . $_FILES['upload_file']['tmp_name'] . ' -vstats 2>&1';
+        $output = $this->execShellCmd($exec);*/
+            // pr($output);die;
+            /*$regex_sizes = "/Video: ([^\r\n]*), ([^,]*), ([0-9]{1,4})x([0-9]{1,4})/"; //(code from @1owk3y)
+        if (preg_match($regex_sizes, $output, $regs)) {
+            $return_data['width'] = $regs [3] ? $regs [3] : null;
+            $return_data['height'] = $regs [4] ? $regs [4] : null;
+        }*/
+
+            $fileinfo = @getimagesize($value['compress_function']['image_path']);
+            $return_data['width'] = $fileinfo[0];
+            $return_data['height'] = $fileinfo[1];
+
+            /*if(strtolower($_REQUEST['platform']) == 'ios'){
+            $exec = 'ffmpeg -i ' . $_FILES['upload_file']['tmp_name'] . ' -vstats 2>&1';
+            $output = $this->execShellCmd($exec);
+            //pr($output);die;
+            $regex_sizes = "/Video: ([^\r\n]*), ([^,]*), ([0-9]{1,4})x([0-9]{1,4})/"; //(code from @1owk3y)
+            if (preg_match($regex_sizes, $output, $regs)) {
+                $return_data['width'] = $regs [3] ? $regs [3] : null;
+                $return_data['height'] = $regs [4] ? $regs [4] : null;
+            }
+        }else{
+         $fileinfo = @getimagesize($value['compress_function']['image_path']);
+         $return_data['width'] = $fileinfo[0];
+         $return_data['height'] = $fileinfo[1];    
+        }*/
+        }
+
+
+        return $return_data;
+    }
+
+    public function execShellCmd($cmd = '')
+    {
+        $output = 'Inavlid Command';
+
+        if (!empty($cmd)) {
+            $output = shell_exec($cmd);
+        }
+
+        return $output;
+    }
+
+    /**
+     * @param $input_params array containing all the input parameters.
+     * 
+     * @return $return_arr needs to return either single or multi-dimensional array.
+     * 
+     * Example:
+     * 
+     * $return_arr[0]['user_id'] = 1;
+     * $return_arr[0]['email'] = "john@example.com"; 
+     * $return_arr[0]['name'] = "John";
+     *                
+     * return $return_arr;
+     */
+
+    public function compressVideoFile($input_params = array())
+    {
+
+        $media_type_arr = explode("/", $_FILES['upload_file']['type']);
+        $media_type = $media_type_arr[0];
+        $return_arr['compress_video_path'] = "";
+        if ($media_type == "video" || strtolower($_REQUEST['file_type']) == 'video') {
+            $userid = $input_params['user_id'];
+            $this->createUploadFolderIfNotExists('compress_video');
+            $name = str_replace(' ', '_', $_FILES['upload_file']['name']);
+            $compress_file = $this->CI->config->item('upload_path') . 'compress_video/' . $name;
+
+            if (strtolower($input_params['platform']) == 'web') {
+                $compress_file = $this->CI->config->item('upload_path') . 'compress_video/' . $name;
+                $return_arr['compress_video_path'] = $compress_file;
+                $input = $_FILES['upload_file']['tmp_name'];
+                $compress_cmd = "ffmpeg -i $input -c:v libx264 -preset:v fast -crf 23 -b:v 500k -vf scale=560:-2 -c:a aac -threads 4 $compress_file";
+                exec($compress_cmd, $output, $return_code);
+            } else {
+                $compress_file = $this->CI->config->item('upload_path') . 'compress_video/' . $name;
+                $return_arr['compress_video_path'] = $compress_file;
+                $input = $_FILES['upload_file']['tmp_name'];
+            //     move_uploaded_file($input, $return_arr['compress_video_path']);
+                $compress_cmd = "ffmpeg -i $input -c:v libx264 -preset:v fast -crf 23 -b:v 500k -vf scale=560:-2 -c:a aac -threads 4 $compress_file";
+                exec($compress_cmd, $output, $return_code);
+            }
+
+            $thumbnail_path = $this->CI->config->item('upload_path') . 'thumbnail/';
+            
+
+            $this->createUploadFolderIfNotExists('thumbnail');
+
+            if (
+                isset($_FILES['thumbnail']) &&
+                $_FILES['thumbnail']['error'] === 0 &&
+                $_FILES['thumbnail']['size'] > 0
+            ) {
+                $uploaded_thumb_tmp = $_FILES['thumbnail']['tmp_name'];
+                $thumbname = $_FILES['thumbnail']['name'];
+                $image = $thumbnail_path . $thumbname;
+                $thumb_file_path = $image;
+                move_uploaded_file($uploaded_thumb_tmp, $thumb_file_path);
+            } else {
+                $tmp_name = $_FILES['upload_file']['tmp_name'];
+                $thumbname = $userid . time() . '.jpeg';
+                $image  = $thumbnail_path . $thumbname;
+                $cmd = "ffmpeg -i $compress_file -deinterlace -an -ss 2 -t 00:00:02 -r 1 -y -vcodec mjpeg -f mjpeg $image 2>&1";
+                exec($cmd, $output, $return_var);
+                $thumb_file_path = $image;
+            }
+
+            if (is_file($thumb_file_path)) {
+
+                if (
+                    isset($_FILES['thumbnail']) &&
+                    $_FILES['thumbnail']['error'] === 0 &&
+                    $_FILES['thumbnail']['size'] > 0
+                ) {
+                    $video_thumbnail_file = $_FILES['thumbnail'];
+                } else {
+                    $video_thumbnail_file = $_FILES['upload_file'];
+                }
+
+                $file_path = "compress_post_video";
+                $folder_id = trim($userid);
+                $file_path = $file_path . "/" . $folder_id;
+                $file_name = $thumbname;
+                $file_tmp_path = $thumb_file_path;
+                $video_thumbnail = $thumbname;
+
+                $_FILES["video_thumbnail"]['name'] = $file_name;
+                $_FILES["video_thumbnail"]['tmp_name'] = $thumb_file_path;
+                $_FILES["video_thumbnail"]['type'] = 'image/jpeg';
+                $_FILES["video_thumbnail"]['error'] = 0;
+                $_FILES["video_thumbnail"]['size'] = filesize($thumb_file_path);
+                $return_arr['image_path'] = $thumb_file_path;
+                $return_arr['custom']['tmp_path'] = $file_tmp_path;
+                $return_arr['custom']['file_path'] = $file_path;
+                $return_arr['custom']['file_name'] = $file_name;
+            } else {
+                $video_thumbnail_file = "";
+                $return_arr['image_path'] = "";
+            }
+
+
+
+            if (strtolower($input_params['platform']) == 'web') {
+                $_FILES['upload_file']['tmp_name'] = $compress_file;
+                $_FILES['upload_file']['size'] = filesize($compress_file);
+            }
+            if (strtolower($input_params['platform']) == 'ios') {
+                $_FILES['upload_file']['tmp_name'] = $compress_file;
+                $_FILES['upload_file']['size'] = filesize($compress_file);
+            } else {
+                $_FILES['upload_file']['tmp_name'] = $compress_file;
+                $_FILES['upload_file']['size'] = filesize($compress_file);
+            }
+        } else {
+            $upload_file = $_FILES['upload_file'];
+            $video_thumbnail_file = "";
+            $return_arr['image_path'] = $video_thumbnail_file;
+        }
+        return $return_arr;
+    }
+
+    public function getCvFileHieght($input_params = array())
+    {
+        try {
+
+            $return_data['width'] = null;
+            $return_data['height'] = null;
+            $return_data['thumbname'] = '';
+            $media_type_arr = explode("/", $_FILES['cover_photo']['type']);
+            $media_type = $media_type_arr[0];
+
+            $ext = end(explode($_FILES['cover_photo']['name']));
+            $video_ext = ['mp4', 'mov', 'wmv', 'avi', '3gp', 'webp'];
+            $image_ext = ['jpg', 'jpeg', 'png', 'gif'];
+            $is_video = in_array($ext, $video_ext);
+            $is_image = in_array($ext, $image_ext);
+            if (strtolower($media_type) == 'image' || $is_image || strtolower($_REQUEST['file_type']) == 'image') {
+                if (strtolower($_REQUEST['platform']) == 'ios') {
+                    $sizes = @getimagesize($_FILES["cover_photo"]["tmp_name"]);
+                    $return_data['width'] = $sizes[0];
+                    $return_data['height'] = $sizes[1];
+                    $exif = exif_read_data($_FILES["cover_photo"]["tmp_name"]);
+                    //pr($exif,1);
+                    if (isset($exif["Orientation"])) {
+                        if ($exif["Orientation"] == 6) {
+                            $newWidth = $sizes[1];
+                            $newHeight = $sizes[0];
+                            $return_data['width'] = $newWidth;
+                            $return_data['height'] = $newHeight;
+                        }
+                    }
+                } else {
+                    $fileinfo = @getimagesize($_FILES["cover_photo"]["tmp_name"]);
+                    if (!empty($fileinfo)) {
+                        $return_data[0]['width'] = $fileinfo[0];
+                        $return_data[0]['height'] = $fileinfo[1];
+                    } else {
+                        $return_data[0]['width'] = null;
+                        $return_data[0]['height'] = null;
+                    }
+                }
+            } elseif (strtolower($media_type) == 'video' || $is_video || strtolower($_REQUEST['file_type']) == 'video') {
+
+                $userid = $input_params['user_id'];
+                $thumbnail_path = $this->CI->config->item('upload_path') . 'covervideo_thumbnail/';
+                //$this->createUploadFolderIfNotExists('covervideo_thumbnail');
+                $tmp_name = $_FILES['cover_photo']['tmp_name'];
+                $thumbname = $userid . time() . '.jpeg';
+                $image  = $thumbnail_path . $thumbname;
+                $cmd = "ffmpeg -i $compress_file -deinterlace -an -ss 2 -t 00:00:02 -r 1 -y -vcodec mjpeg -f mjpeg $image 2>&1";
+
+                //$this->execShellCmd($cmd);  
+                $thumb_file_path = $image;
+
+                if (is_file($thumb_file_path)) {
+                    $file_path = "covervideo_thumbnail";
+                    $folder_id = trim($userid);
+                    $file_path = $file_path;
+                    $file_name = $thumbname;
+                    $file_tmp_path = $thumb_file_path;
+                    $video_thumbnail = $thumbname;
+                    $video_thumbnail_file = $_FILES['upload_file'];
+                    $_FILES["covervideo_thumbnail"]['name'] = $file_name;
+                    $_FILES["covervideo_thumbnail"]['tmp_name'] = $thumb_file_path;
+                    $_FILES["covervideo_thumbnail"]['type'] = 'image/jpeg';
+                    $_FILES["covervideo_thumbnail"]['error'] = 0;
+                    $_FILES["covervideo_thumbnail"]['size'] = filesize($thumb_file_path);
+                    $thumb_file_path;
+
+                    $fileinfo = @getimagesize($thumb_file_path);
+                    $return_data[0]['width'] = $fileinfo[0];
+                    $return_data[0]['height'] = $fileinfo[1];
+                    $return_data[0]['thumbname'] = $thumbname;
+                } else {
+                    $exec = 'ffmpeg -i ' . $_FILES['cover_photo']['tmp_name'] . ' -vstats 2>&1';
+                    //$output = $this->execShellCmd($exec);
+                    //pr($output);die;
+                    $regex_sizes = "/Video: ([^\r\n]*), ([^,]*), ([0-9]{1,4})x([0-9]{1,4})/"; //(code from @1owk3y)
+                    if (preg_match($regex_sizes, $output, $regs)) {
+                        $return_data['width'] = $regs[3] ? $regs[3] : null;
+                        $return_data['height'] = $regs[4] ? $regs[4] : null;
+                        //$return_data['width_1'] = $regs [3] ? $regs [3] : null;
+                        //$return_data['height_1'] = $regs [4] ? $regs [4] : null;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $return_data[0]['height'] = null;
+            $return_data[0]['width'] = null;
+        }
+        #pr($return_data,1);
+        return $return_data;
+    }
+
+    public function getCoverImageFileHieght($input_params = array())
+    {
+        /**
+         * @param $input_params array containing all the input parameters.
+         * 
+         * @return $return_arr needs to return either single or multi-dimensional array.
+         * 
+         * Example:
+         * 
+         * $return_arr[0]['user_id'] = 1;
+         * $return_arr[0]['email'] = "john@example.com"; 
+         * $return_arr[0]['name'] = "John";
+         *                
+         * return $return_arr;
+         */
+
+        /**
+         * @param $input_params array containing all the input parameters.
+         * 
+         * @return $return_arr needs to return either single or multi-dimensional array.
+         * 
+         * Example:
+         * 
+         * $return_arr[0]['user_id'] = 1;
+         * $return_arr[0]['email'] = "john@example.com"; 
+         * $return_arr[0]['name'] = "John";
+         *                
+         * return $return_arr;
+         */
+
+        $return_data['width_1'] = null;
+        $return_data['height_1'] = null;
+        $media_type_arr = explode("/", $_FILES['cover_photo']['type']);
+        $media_type = $media_type_arr[0];
+        if (strtolower($media_type) == 'image') {
+            $fileinfo = @getimagesize($_FILES["cover_photo"]["tmp_name"]);
+            //$return_data['width'] = $fileinfo[0];
+            //$return_data['height'] = $fileinfo[1];
+            $return_data['width_1'] = $fileinfo[0];
+            $return_data['height_1'] = $fileinfo[1];
+        } elseif (strtolower($media_type) == 'video') {
+            $exec = 'ffmpeg -i ' . $_FILES['cover_photo']['tmp_name'] . ' -vstats 2>&1';
+            $output = $this->execShellCmd($exec);
+            // pr($output);die;
+            $regex_sizes = "/Video: ([^\r\n]*), ([^,]*), ([0-9]{1,4})x([0-9]{1,4})/"; //(code from @1owk3y)
+            if (preg_match($regex_sizes, $output, $regs)) {
+                // $return_data['width'] = $regs [3] ? $regs [3] : null;
+                // $return_data['height'] = $regs [4] ? $regs [4] : null;
+                $return_data['width_1'] = $regs[3] ? $regs[3] : null;
+                $return_data['height_1'] = $regs[4] ? $regs[4] : null;
+            }
+        }
+        //pr($return_data);
+        return $return_data;
+    }
+
+    public function getUpdateFileHieght($input_params = array())
+    {
+        if (!empty($input_params['get_post_media_record'])) {
+            foreach ($input_params['get_post_media_record'] as $key => $value) {
+                $return_data['width'] = null;
+                $return_data['height'] = null;
+                if ($value['pm_media_type'] == 'Image' && (!empty($value['pm_upload_file_org']))) {
+                    if (@getimagesize($value['pm_upload_file_org'])) {
+                        $fileinfo = @getimagesize($value['pm_upload_file_org']);
+                        $return_data['width'] = $fileinfo[0];
+                        $return_data['height'] = $fileinfo[1];
+                        $dataUpdate = array('vMWidth' => $return_data['width'], 'vMHeight' => $return_data['height']);
+                        $this->CI->db->where('iPostMediaId', $value['pm_post_media_id']);
+                        $this->CI->db->update('post_media', $dataUpdate);
+                    } else {
+                        continue;
+                    }
+                } elseif ($value['pm_media_type'] == 'Video' && (!empty($value['pm_video_thumbnail_org']))) {
+                    if (@getimagesize($value['pm_video_thumbnail_org'])) {
+                        $fileinfo = @getimagesize($value['pm_video_thumbnail_org']);
+                        $return_data['width'] = $fileinfo[0];
+                        $return_data['height'] = $fileinfo[1];
+                        $dataUpdate = array('vMWidth' => $return_data['width'], 'vMHeight' => $return_data['height']);
+                        $this->CI->db->where('iPostMediaId', $value['pm_post_media_id']);
+                        $this->CI->db->update('post_media', $dataUpdate);
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    public function getMyPostIDList($input_params = array())
+    {
+        $get_other_post_user = $input_params['get_other_post_user'];
+        $post_ids = array();
+        if (!$get_other_post_user) {
+            foreach ($get_other_post_user as $val) {
+                $post_ids[] = $val['p_post_id'];
+                $post_media_id[] = $val['post_media_id'];
+            }
+        }
+        $return_arr = array();
+        $return_arr[0]['post_ids'] = $post_ids;
+        $return_arr[0]['post_stats_cond'] = " AND `p`.`iPostId` IN('" .  @implode("','", $post_ids) . "')";
+        $return_arr[0]['post_media_id'] = $post_media_id;
+        $return_arr[0]['post_media_cond'] = " AND `pl`.`iPostMediaId` IN('" .  @implode("','", $post_media_id) . "')";
+        return $return_arr;
+    }
+
+    public function assignMyPostStats(&$input_params = array())
+    {
+        $get_other_post_user = $input_params['get_other_post_user'];
+        $get_comment_stats = $input_params['get_post_comment_status'];
+        $get_like_stats = $input_params['get_post_like_status'];
+        $get_share_stats = $input_params['get_post_share_status'];
+        if (!empty($get_other_post_user)) {
+            foreach ($get_other_post_user as $outerKey => $outerVal) {
+                if (is_array($get_comment_stats) && count($get_comment_stats) > 0) {
+                    $input_params['get_other_post_user'][$outerKey]['comment_count'] = $get_comment_stats[$outerKey]['ps_total_comments'];
+                }
+                if (is_array($get_like_stats) && count($get_like_stats) > 0) {
+                    foreach ($get_like_stats as $innerVallike) {
+                        if ($outerVal['p_post_id'] == $innerVallike['ps_post_id_l']) {
+                            $input_params['get_other_post_user'][$outerKey]['likes_count'] = $innerVallike['ps_total_likes'];
+                        }
+                    }
+                }
+                if (is_array($get_share_stats) && count($get_share_stats) > 0) {
+                    $input_params['get_other_post_user'][$outerKey]['shared_count'] = $get_share_stats[$outerKey]['ps_total_shares'];
+                }
+            }
+        }
+        return $return_arr;
+    }
+
+    public function updateCoverFIleHeight($input_params = array())
+    {
+        foreach ($input_params['get_users_record'] as $key => $value) {
+            //pr($input_params['get_post_media_record']);die();
+            $return_data['width'] = null;
+            $return_data['height'] = null;
+            $type = 'Image';
+            if (preg_match('/^.*\.(mp4|mov|wmv|avi|3gp|webp)$/i', $value['u_cover_photo'])) {
+                $type = "Video";
+            }
+
+            if ($type == 'Image' && (!empty($value['u_cover_photo']))) {
+                if (@getimagesize($value['u_cover_photo'])) {
+                    $fileinfo = @getimagesize($value['u_cover_photo']);
+                    //“image exists “;
+                    $return_data['width'] = $fileinfo[0];
+                    $return_data['height'] = $fileinfo[1];
+                    $dataUpdate = array('vCvWidth' => $return_data['width'], 'vCvHeight' => $return_data['height']);
+                    $this->CI->db->where('iUsersId', $value['u_users_id']);
+                    $this->CI->db->update('users', $dataUpdate);
+                    //pr($this->CI->db->last_query());die();
+                } else {
+                    continue;
+                }
+            } elseif ($type == 'Video' && (!empty($value['u_cover_video']))) {
+                if (@getimagesize($value['u_cover_video'])) {
+                    $fileinfo = @getimagesize($value['u_cover_video']);
+                    //“thumbnail exists “;
+                    $return_data['width'] = $fileinfo[0];
+                    $return_data['height'] = $fileinfo[1];
+                    $dataUpdate = array('vCvWidth' => $return_data['width'], 'vCvHeight' => $return_data['height']);
+                    $this->CI->db->where('iUsersId', $value['u_users_id']);
+                    $this->CI->db->update('users', $dataUpdate);
+                    //pr($this->CI->db->last_query());die();
+                } else {
+                    continue;
+                }
+            }
+        }
+        //pr($val);die();
+    }
+
+      public function getRandomePost(&$input_params = array())
+      {
+            // print_r($input_params);
+            // die;
+            $get_random_post = $input_params['get_random_post'];
+            $get_random_post = $this->array_random($get_random_post, 10);
+            unset($input_params['get_random_post']);
+            $input_params['get_random_post'] = $get_random_post;
+            
+            
+            $post_ids = array();
+            if (!empty($get_random_post)) {
+                  foreach ($get_random_post as $val) {
+                  $post_ids[] = $val['p_post_id_1'];
+                  $post_media_id[] = $val['post_media_id_1'];
+                  }
+                  $return_arr = array();
+                  $return_arr[0]['post_ids_1'] = $post_ids;
+                  $return_arr[0]['post_stats_cond_1'] = " AND `p`.`iPostId` IN('" .  @implode("','", $post_ids) . "')";
+                  $return_arr[0]['post_media_id_1'] = $post_media_id;
+                  $return_arr[0]['post_media_cond_1'] = " AND `pl`.`iPostMediaId` IN('" .  @implode("','", $post_media_id) . "')";
+            }
+            return $return_arr;
+      }
+
+    public function assingRandomePost(&$input_params = array())
+    {
+        $get_random_post = $input_params['get_random_post'];
+        $get_comment_stats = $input_params['get_randome_post_comment'];
+        $get_like_stats = $input_params['get_randome_post_like'];
+        $get_share_stats = $input_params['get_randome_post_share'];
+        if (!empty($get_random_post)) {
+            foreach ($get_random_post as $outerKey => $outerVal) {
+                if (is_array($get_comment_stats) && count($get_comment_stats) > 0) {
+
+                    foreach ($get_comment_stats as $innerVal) {
+                        if ($outerVal['p_post_id_1'] == $innerVal['ps_post_id_c']) {
+
+                            $input_params['get_random_post'][$outerKey]['comment_count_1'] = $innerVal['ps_total_comments'];
+                        }
+                    }
+                }
+                if (is_array($get_like_stats) && count($get_like_stats) > 0) {
+
+                    foreach ($get_like_stats as $innerVallike) {
+
+                        if ($outerVal['p_post_id_1'] == $innerVallike['ps_post_id_l']) {
+                            $input_params['get_random_post'][$outerKey]['likes_count_1'] = $innerVallike['ps_total_likes'];
+                        }
+                    }
+                }
+                if (is_array($get_share_stats) && count($get_share_stats) > 0) {
+                    foreach ($get_share_stats as $innerVal) {
+                        if ($outerVal['p_post_id_1'] == $innerVal['ps_post_id_s']) {
+                            $input_params['get_random_post'][$outerKey]['shared_count_1'] = $innerVal['ps_total_shares'];
+                        }
+                    }
+                }
+            }
+        }
+        $return_arr = array();
+        return $return_arr;
+    }
+
+    public function getDeviceTokens($input_params = array())
+    {
+        /**
+         * @param $input_params array containing all the input parameters.
+         * 
+         * @return $return_arr needs to return either single or multi-dimensional array.
+         * 
+         * Example:
+         * 
+         * $return_arr[0]['user_id'] = 1;
+         * $return_arr[0]['email'] = "john@example.com"; 
+         * $return_arr[0]['name'] = "John";
+         *                
+         * return $return_arr;
+         */
+
+        if (!empty($input_params['get_users_myfeed_record'])) {
+            $android_devices = array_filter($input_params['get_users_myfeed_record'], function ($item) {
+                return $item['u_device_type'] == 'Android';
+            });
+            $ios_devices = array_filter($input_params['get_users_myfeed_record'], function ($item) {
+                return $item['u_device_type'] == 'iOS';
+            });
+            $return_arr['android_device_tokens'] = !empty($android_devices) ? implode(',', array_column($android_devices, 'u_device_token_1')) : '';
+            $return_arr['ios_device_tokens'] = !empty($ios_devices) ? implode(',', array_column($ios_devices, 'u_device_token_1')) : '';
+        } elseif (!empty($input_params['get_user_recored'])) {
+            $android_devices = array_filter($input_params['get_user_recored'], function ($item) {
+                return $item['u_device_type_1'] == 'Android';
+            });
+            $ios_devices = array_filter($input_params['get_user_recored'], function ($item) {
+                return $item['u_device_type_1'] == 'iOS';
+            });
+            $return_arr['android_device_tokens1'] = !empty($android_devices) ? implode(',', array_column($android_devices, 'u_device_token')) : '';
+            $return_arr['ios_device_tokens1'] = !empty($ios_devices) ? implode(',', array_column($ios_devices, 'u_device_token')) : '';
+        } else {
+            $return_arr['android_device_tokens'] = array();
+            $return_arr['ios_device_tokens'] = array();
+            $return_arr['android_device_tokens1'] = array();
+            $return_arr['ios_device_tokens1'] = array();
+        }
+        // pr($return_arr,1);
+        return $return_arr;
+    }
+
+    public function get_archive_video($archiveId)
+    {
+        if (empty($archiveId)) {
+            return $this->CI->config->item('images_url') . "noimage.gif";
+        }
+        $AWS_SSL_VERIFY = ($this->CI->config->item('AWS_SSL_VERIFY') == "Yes") ? TRUE : FALSE;
+        $AWS_END_POINT = $this->CI->config->item('AWS_END_POINT');
+        $AWS_BUCKET_NAME = $this->CI->config->item('AWS_BUCKET_NAME');
+
+        $AWS_PROTOCOL = ($AWS_SSL_VERIFY) ? 'https://' : 'http://';
+
+        $AWS_SERVER_REGION = (trim($AWS_END_POINT)) ? ".s3." . trim($AWS_END_POINT) . ".amazonaws.com" : FALSE;
+        $AWS_FOLDER = $this->CI->config->item('TOKBOX_PROJECT_API_KEY');
+        if ($AWS_SERVER_REGION == false) {
+            return false;
+        }
+        $live_video = $AWS_PROTOCOL . $AWS_BUCKET_NAME . $AWS_SERVER_REGION . '/' . $AWS_FOLDER . '/' . $archiveId . '/archive.mp4';
+        return $live_video;
+    }
+
+    public function tempPrint($input_params = array())
+    {
+        /**
+         * @param $input_params array containing all the input parameters.
+         * 
+         * @return $return_arr needs to return either single or multi-dimensional array.
+         * 
+         * Example:
+         * 
+         * $return_arr[0]['user_id'] = 1;
+         * $return_arr[0]['email'] = "john@example.com"; 
+         * $return_arr[0]['name'] = "John";
+         *                
+         * return $return_arr;
+         */
+        //  pr($_FILES,0);
+
+        //echo "hello"; die();
+        //pr($input_params,1); die();
+        return $return_arr;
+    }
+
+    public function getMovementFileHeightWidth($input_params = array())
+    {
+        try {
+            $return_data['width'] = null;
+            $return_data['height'] = null;
+            if (isset($_FILES['upload_file'])) {
+                $_REQUEST["upload_file"] = $_FILES['upload_file'];
+            }
+            $media_type_arr = explode("/", $_REQUEST['upload_file']['type']);
+            $ext = end(explode($_REQUEST['upload_file']['name']));
+            $video_ext = ['mp4', 'mov', 'wmv', 'avi', '3gp', 'webp'];
+            $image_ext = ['jpg', 'jpeg', 'png', 'gif'];
+            $is_video = in_array(strtolower($ext), $video_ext);
+            $is_image = in_array(strtolower($ext), $image_ext);
+            $media_type = $media_type_arr[0];
+            if (strtolower($media_type) == 'image' || strtolower($_REQUEST['media_type']) == 'image' || $is_image) {
+                if (strtolower($_REQUEST['platform']) == 'ios') {
+                    $sizes = @getimagesize($_REQUEST["upload_file"]["tmp_name"]);
+                    $return_data['width'] = $sizes[0];
+                    $return_data['height'] = $sizes[1];
+                    $exif = exif_read_data($_REQUEST["upload_file"]["tmp_name"]);
+                    if (isset($exif["Orientation"])) {
+                        if ($exif["Orientation"] == 6) {
+                            $newWidth = $sizes[1];
+                            $newHeight = $sizes[0];
+                            $return_data['width'] = !empty($newWidth) ? $newWidth : null;
+                            $return_data['height'] = !empty($newHeight) ? $newHeight : null;
+                        }
+                    }
+                } else {
+                    $fileinfo = @getimagesize($_REQUEST["upload_file"]["tmp_name"]);
+                    $return_data['width'] = !empty($fileinfo[0]) ? $fileinfo[0] : null;
+                    $return_data['height'] = !empty($fileinfo[1]) ? $fileinfo[1] : null;
+                }
+            }
+        } catch (Exception $e) {
+            $return_data[0]['width'] = null;
+            $return_data[0]['height'] = null;
+        }
+        return $return_data;
+    }
+
+    public function getFileObject($input_params = '', $index_val = '')
+    {
+        /**
+         * @param $input_params array containing all the input parameters.
+         *             
+         * @param $index_val if variable is using inside the loop then $index_val gives index of loop variable.
+         * 
+         * @return $ret_val, return value must be either value or array.
+         *
+         * Example:
+         * 
+         * $ret_val = array('MON','TUE','WED','THU','FRI','SAT','SUN');
+         * 
+         * return $ret_val;
+         *
+         */
+        $ret_val = array();
+        if ($input_params['i'] < count($_FILES['uploade_file']['name'])) {
+            $ret_val['name'] = $_FILES['uploade_file']['name'][$input_params['i']];
+            $ret_val['tmp_name'] = $_FILES['uploade_file']['tmp_name'][$input_params['i']];
+            $ret_val['type'] = $_FILES['uploade_file']['type'][$input_params['i']];
+            $ret_val['size'] = $_FILES['uploade_file']['size'][$input_params['i']];
+            $ret_val['error'] = $_FILES['uploade_file']['error'][$input_params['i']];
+        }
+        // pr($_FILES,0);
+        // pr($_FILES['uploade_file']['name'],0);
+        //pr($ret_val); die();
+        return $ret_val;
+    }
+
+    public function generetMovrmentToken($input_params = array())
+    {
+        /**
+         * @param $input_params array containing all the input parameters.
+         * 
+         * @return $return_arr needs to return either single or multi-dimensional array.
+         * 
+         * Example:
+         * 
+         * $return_arr[0]['user_id'] = 1;
+         * $return_arr[0]['email'] = "john@example.com"; 
+         * $return_arr[0]['name'] = "John";
+         *                
+         * return $return_arr;
+         */
+        $return_arr['getToken'] = '';
+        #pr($input_params,1);
+        $MovementsId = !empty($input_params['insert_movement'][0]['insert_id']) ? $input_params['insert_movement'][0]['insert_id'] : '';
+        $User_Id = !empty($input_params['user_id']) ? $input_params['user_id'] : '';
+        $MovementName = str_replace(' ', '_', $input_params['movement_name']);
+        $return_arr['getToken'] = $MovementsId . '_' . $User_Id . '_' . $MovementName;
+        return !empty($return_arr) ? $return_arr : array();
+    }
+
+    public function getInactiveStatus($value = '', $data_arr = array())
+    {
+        /**
+         * @param $value contains original value of the field.
+         * 
+         * @param $data_arr array containing all the input parameters.
+         * 
+         * @return $ret_val, it can be integer or string, which contains modified value of the field.
+         * 
+         * Example:
+         * 
+         * $ret_val = strtolower($value);
+         * 
+         * return $ret_val;
+         */
+        $ret_val = $value;
+        if (empty($value)) {
+            $ret_val = 'Inactive';
+        }
+        return $ret_val;
+    }
+
+    public function getTimeInString($value = '', $data_arr = array())
+    {
+        /**
+         * @param $value contains original value of the field.
+         * 
+         * @param $data_arr array containing all the input parameters.
+         * 
+         * @return $ret_val, it can be integer or string, which contains modified value of the field.
+         * 
+         * Example:
+         * 
+         * $ret_val = strtolower($value);
+         * 
+         * return $ret_val;
+         */
+        $minutes = $value;
+        $ret_val = "$minutes minutes";
+        if ($value > 59) {
+            $hours = intval($minutes / 60);
+            $minute = $minutes % 60;
+            $ret_val = "$hours hour";
+            if ($minute > 0) {
+                $ret_val .= " and $minute minute";
+            }
+        }
+        return $ret_val;
+    }
+
+    public function getJoinMovement($value = '', $data_arr = array())
+    {
+        /**
+         * @param $value contains original value of the field.
+         * 
+         * @param $data_arr array containing all the input parameters.
+         * 
+         * @return $ret_val, it can be integer or string, which contains modified value of the field.
+         * 
+         * Example:
+         * 
+         * $ret_val = strtolower($value);
+         * 
+         * return $ret_val;
+         */
+        $ret_val = 0;
+        if (!empty($value)) {
+            $ret_val = 1;
+        }
+        return $ret_val;
+    }
+
+    public function getMovementPostIDList($input_params = array())
+    {
+        $get_movement_releted_post = $input_params['get_movement_releted_post'];
+        $post_ids = array();
+        if (!empty($post_ids)) {
+            foreach ($get_movement_releted_post as $val) {
+                $post_ids[] = $val['p_post_id_3'];
+                $post_media_id[] = $val['pm_post_media_id'];
+            }
+        }
+        $return_arr = array();
+        $return_arr[0]['post_ids_3'] = $post_ids;
+        $return_arr[0]['post_movement_cond'] = " AND `p`.`iPostId` IN('" .  @implode("','", $post_ids) . "')";
+        $return_arr[0]['post_media_id'] = $post_media_id;
+        $return_arr[0]['post_media_cond'] = " AND `pl`.`iPostMediaId` IN('" .  @implode("','", $post_media_id) . "')";
+        return $return_arr;
+    }
+
+    public function assignMovementPost(&$input_params = array())
+    {
+        $get_movement_releted_post = $input_params['get_movement_releted_post'];
+        $get_movement_post_comment = $input_params['get_movement_post_comment'];
+        $get_movement_post_like_status = $input_params['get_movement_post_like_status'];
+        $get_movement_post_share_status = $input_params['get_movement_post_share_status'];
+        if (!empty($get_movement_releted_post)) {
+            foreach ($get_movement_releted_post as $outerKey => $outerVal) {
+                if (!empty($get_movement_post_comment)) {
+                    $input_params['get_movement_releted_post'][$outerKey]['comment_count_3'] =              $get_movement_post_comment[$outerKey]['ps_total_comments_3'];
+                }
+                if (!empty($get_movement_post_like_status)) {
+                    foreach ($get_movement_post_like_status as $innerVallike) {
+                        if ($outerVal['p_post_id_3'] == $innerVallike['ps_post_id_l_3']) {
+                            $input_params['get_movement_releted_post'][$outerKey]['like_count_3'] = $innerVallike['ps_total_likes_3'];
+                        }
+                    }
+                }
+                if (is_array($get_movement_post_share_status) && count($get_movement_post_share_status) > 0) {
+                    $input_params['get_movement_releted_post'][$outerKey]['shared_count_3'] = $get_movement_post_share_status[$outerKey]['ps_total_shares_3'];
+                }
+            }
+        }
+        $return_arr = array();
+        return $return_arr;
+    }
+
+    public function valid_email($input_params = array())
+    {
+        /**
+         * @param $input_params array containing all the input parameters.
+         * 
+         * @return $return_arr needs to return either single or multi-dimensional array.
+         * 
+         * Example:
+         * 
+         * $return_arr[0]['user_id'] = 1;
+         * $return_arr[0]['email'] = "john@example.com"; 
+         * $return_arr[0]['name'] = "John";
+         *                
+         * return $return_arr;
+         */
+        if (isset($input_params['user_email'])) {
+            $email = $input_params['user_email'];
+        } else if ($input_params['email']) {
+            $email = $input_params['email'];
+        }
+        $BOUNCE_API_URL = $this->CI->config->item('BOUNCE_API_URL');
+
+        $BOUNCE_API_KEY = $this->CI->config->item('BOUNCE_API_KEY');
+        try {
+            $curl = curl_init();
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => $BOUNCE_API_URL,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => '{"email": "' . $email . '"}',
+                CURLOPT_HTTPHEADER => array(
+                    "Content-Type: application/json",
+                    "Authorization: " . $BOUNCE_API_KEY
+                ),
+            ));
+
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+
+            $response = curl_exec($curl);
+
+            curl_close($curl);
+            $response = json_decode($response, true);
+
+            $return_arr['API_status'] = $response['status'];
+            if ($response['status'] == 'failed' && strtolower($response['data']['safe_to_send']) == "risky") {
+                $return_arr['status'] = $response['status'];
+                $return_arr['code'] = $response['error']['code'];
+                $return_arr['API_error'] = $response['error']['message'];
+                $return_arr['safe_to_send'] = '';
+                $return_arr['bounce_type'] = @$response['data']['bounce_type'] ? $response['data']['bounce_type'] : 'Hard';
+                $return_arr['score'] = @$response['data']['score'] ? $response['data']['score'] : 0;
+            } else {
+                $return_arr['status'] = $response['data']['status'];
+                $return_arr['safe_to_send'] = $response['data']['safe_to_send'];
+                $return_arr['code'] = $response['data']['sub_status']['code'];
+                $return_arr['API_error'] = $response['data']['sub_status']['desc'];
+                $return_arr['bounce_type'] = $response['data']['bounce_type'];
+                $return_arr['score'] = $response['data']['score'];
+                if ($return_arr['safe_to_send'] != 'yes' && $return_arr['safe_to_send'] != 'no') {
+                    $return_arr['API_error'] = 'Email is not valid through our email bounce policy';
+                }
+            }
+        } catch (Exception $e) {
+            $return_arr['API_error'] = $e->getMessage();
+            $response['status'] = 'failed';
+        }
+        $return_arr['valid_status'] = array('valid', 'unknown', 'catch_all');
+
+        #
+        return ($return_arr);
+
+        /*Array
+        (
+            [status] => success
+            [data] => Array
+                (
+                    [email_address] => no-replyalita@gmail.com
+                    [status] => invalid
+                    [sub_status] => Array
+                        (
+                            [code] => 406
+                            [desc] => Mailbox not found
+                        )
+        
+                    [safe_to_send] => no
+                    [suggested_email_address] => 
+                    [verified_on] => 2021-10-13T14:30:44.110Z
+                    [time_taken] => 244
+                    [disposable] => no
+                    [free] => yes
+                    [role] => no
+                    [gibberish] => no
+                    [bounce_type] => hard
+                    [detail_info] => Array
+                        (
+                            [account] => no-replyalita
+                            [domain] => gmail.com
+                        )
+        
+                    [blacklist_info] => Array
+                        (
+                        )
+        
+                    [profile] => 
+                    [score] => 0
+                )
+        
+        )
+        Email address: rlhilliard45@gmail.com
+        Status: invalid
+        ===============================
+        
+        Array
+        (
+            [status] => success
+            [data] => Array
+                (
+                    [email_address] => rohit456@gmail.com
+                    [status] => valid
+                    [sub_status] => Array
+                        (
+                            [code] => 200
+                            [desc] => Success
+                        )
+        
+                    [safe_to_send] => yes
+                    [suggested_email_address] => 
+                    [verified_on] => 2021-10-18T13:43:51.788Z
+                    [time_taken] => 414
+                    [disposable] => no
+                    [free] => yes
+                    [role] => no
+                    [gibberish] => no
+                    [bounce_type] => 
+                    [detail_info] => Array
+                        (
+                            [account] => rohit456
+                            [domain] => gmail.com
+                        )
+        
+                    [blacklist_info] => Array
+                        (
+                        )
+        
+                    [profile] => 
+                    [score] => 1
+                )
+        
+        )
+        Email address: rohit456@gmail.com
+        Status: valid
+    */
+    }
+
+    public function getHeightTo($value = '', $dataArr = array())
+    {
+        pr($value, 1);
+    }
+
+    public function array_random($array, $amount = 1)
+    {
+        $keys = array_rand($array, $amount);
+        if ($amount == 1) {
+            return $array[$keys];
+        }
+        $results = [];
+        foreach ($keys as $key) {
+            $results[] = $array[$key];
+        }
+        return $results;
+    }
+    #####GENERATED_CUSTOM_FUNCTION_END#####
+
+}
+
+/* End of file Cit_General.php */
+/* Location: ./application/libraries/Cit_general.php */

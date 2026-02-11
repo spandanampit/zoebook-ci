@@ -1,0 +1,2005 @@
+var friendsList = [];
+var token = $("#firebase_token").val();
+
+console.log('token', token);
+
+if (!token) {
+      console.log('token expaired');
+      window.location.href = site_url + 'logout.html?tokenexpire=yes';
+}
+
+if (window.location.hostname != "localhost" && window.location.hostname != "zoebook.projectspreview.net") {
+      var rootNode = "/";
+} else {
+      var rootNode = "/test";
+}
+
+var msglimit = 10;
+var lastMessageValue = "";
+var chat_room = "";
+var online_status = "";
+var user_name = $("#username").val();
+var profile_image = $("#profileImage").val();
+var name = (receiver_id = chat_avatar = "");
+console.log("user_profile_image");
+console.log(user_name);
+console.log(user_profile_image);
+
+function getUserProfileImage(name, url) {
+      if (url != null && url.trim() !== "") {
+            name = name.replace(/[\[\]]/g, "\\$&");
+            const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+            const results = regex.exec(url);
+            if (!results) return url;
+            if (!results[2]) return "";
+            let paramValue = decodeURIComponent(
+                  results[2].replace(/\+/g, " ")
+            );
+
+            // Check if the parameter value is a base64 encoded URL
+            try {
+                  const decodedValue = atob(paramValue);
+                  if (
+                        decodedValue.startsWith("http") ||
+                        decodedValue.startsWith("https")
+                  ) {
+                        paramValue = decodedValue;
+                  }
+            } catch (e) {
+                  console.error("Error decoding base64 URL:", e);
+            }
+
+            // Replace 'profile_image' with 'compress_profile_image' in the URL
+            return paramValue.replace(
+                  "/profile_image/",
+                  "/compress_profile_image/"
+            );
+      } else {
+            return "https://zoebook.com/public/images/noimage.gif";
+      }
+}
+var user_profile_image = getUserProfileImage("pic", profile_image);
+
+$(document).ready(function () {
+      if (token) {
+            firebase.auth()
+                  .signInWithCustomToken(token)
+                  .catch(function (error) {
+                        // Handle Errors here.
+                        //debugger;
+                        var errorCode = error.code;
+                        var errorMessage = error.message;
+
+                        //alert(errorMessage);
+                        console.log(errorMessage);
+                        $.ajax({
+                              url: "firebaseTokenGeneration",
+                              success: function (out) {
+                                    $("#firebase_token").val(out);
+                                    token = out;
+                                    // window.location.reload();
+                              },
+                        });
+                        // if(typeof(logged_in_user_id) != 'undefined') {
+                        //         setOfflineUserStatus(logged_in_user_id);
+                        //   }
+                        //window.location.href = site_url+'logout.html?tokenexpire=yes';
+                  })
+                  .then(function (data) {
+                        if (data.user.uid && data.user.uid != "") {
+                              setOnlineUserStatus(data.user.uid);
+                              getUsers(data.user.uid);
+                              realTime(data.user.uid);
+                              // alert("reach");
+                              getUnreadTotalCount(data.user.uid);
+                              logged_in_user_id = data.user.uid;
+                              return true;
+                        } else {
+                              alert("uid missing");
+                              //window.location.href = site_url+'logout.html?tokenexpire=yes';
+                        }
+                  });
+      }
+});
+$(".chat-open").click(function () {
+      setActiveChatRoom(logged_in_user_id, "");
+      $(".chat-block").addClass("open-chat-box");
+      $(this).hide();
+      getUnreadTotalCount(logged_in_user_id);
+      // getUsers(logged_in_user_id);
+});
+
+$(".chat-link").click(function () {
+      setActiveChatRoom(logged_in_user_id, "");
+      $(".chat-block").addClass("open-chat-box");
+      $(".chat-open").hide();
+      getUnreadTotalCount(logged_in_user_id);
+      // getUsers(logged_in_user_id);
+});
+
+$(".close-chat").click(function () {
+      setActiveChatRoom(logged_in_user_id, "");
+      $(".chat-block").removeClass("open-chat-box");
+      $(".chat-open").show();
+      getUnreadTotalCount(logged_in_user_id);
+});
+function realTime(logged_in_user_id) {
+      var contacts_ref = firebase
+            .database()
+            .ref(rootNode + "/contacts_new/" + logged_in_user_id + "/");
+      contacts_ref.on("child_added", function (data) {
+            getUsers(logged_in_user_id);
+      });
+}
+
+$("#search")
+      .autocomplete({
+            source: function (request, response) {
+                  $.ajax({
+                        url: "friends_search.html",
+                        method: "POST",
+                        data: {
+                              term: request.term,
+                              exclude: friendsList,
+                        },
+                        success: function (data) {
+                              var parsed = JSON.parse(data);
+                              response(parsed);
+                        },
+                  });
+            },
+            minLength: 2,
+            select: function (event, ui) {
+                  addUserToChat(
+                        logged_in_user_id,
+                        ui.item.id,
+                        ui.item.label,
+                        ui.item.email,
+                        ui.item.image
+                  );
+                  $("#search").val("");
+                  return false;
+            },
+      })
+      .autocomplete("instance")._renderItem = function (ul, item) {
+            return $("<li></li>")
+                  .data("item.autocomplete", item)
+                  .append(
+                        '<div class="cmn-user">' +
+                        '<i class="cmn-user-img">' +
+                        '<img src="' +
+                        item.image +
+                        '" alt="">' +
+                        "</i>" +
+                        '<div class="cmn-user-name">' +
+                        '<h6><a href="javascript:;" data-user-id="' +
+                        item.id +
+                        '">' +
+                        item.label +
+                        "</a> </h6>" +
+                        "</div>" +
+                        "</div>"
+                  )
+                  .appendTo(ul);
+      };
+
+function addUserToChat(
+      userId,
+      friendId,
+      friendUserName,
+      friendEmail,
+      friendImage
+) {
+      var chat_room = userId + "_" + friendId;
+
+      if (userId > friendId) {
+            chat_room = userId + "_" + friendId;
+      } else {
+            chat_room = friendId + "_" + userId;
+      }
+
+      var BasicDetails = {
+            chatRoom: chat_room.toString(),
+            email: friendEmail.toString(),
+            id: friendId.toString(),
+            image: friendImage.toString(),
+            userName: friendUserName.toString(),
+      };
+      firebase.database()
+            .ref()
+            .child(
+                  rootNode +
+                  "/contacts_new/" +
+                  userId +
+                  "/" +
+                  friendId +
+                  "/"
+            )
+            .update({ BasicDetails: BasicDetails });
+
+      firebase.database()
+            .ref()
+            .child(
+                  rootNode +
+                  "/contacts_new/" +
+                  userId +
+                  "/" +
+                  friendId +
+                  "/LastMessage/"
+            )
+            .update({ isDeleted: false }); //hb0129
+
+      firebase.database()
+            .ref()
+            .child(
+                  rootNode +
+                  "/contacts_new/" +
+                  userId +
+                  "/" +
+                  friendId +
+                  "/"
+            )
+            .update({ unReadMessageCount: 0 });
+      var user_email = $("#email").val();
+      var user_name = $("#username").val();
+      var user_profile_image = $("#profile_image").val();
+
+      var BasicDetails = {
+            chatRoom: chat_room.toString(),
+            email: user_email.toString(),
+            id: userId.toString(),
+            image: user_profile_image.toString(),
+            userName: user_name.toString(),
+      };
+      firebase.database()
+            .ref()
+            .child(
+                  rootNode +
+                  "/contacts_new/" +
+                  friendId +
+                  "/" +
+                  userId +
+                  "/"
+            )
+            .update({ BasicDetails: BasicDetails });
+
+      //firebase.database().ref().child('/contacts_new/'+friendId+'/' + userId+'/LastMessage/').update({isDeleted : false});
+      //firebase.database().ref().child('/contacts_new/'+friendId+'/' + userId).update({lastDeletedMsgTimeStamp : ''});
+
+      firebase.database()
+            .ref()
+            .child(
+                  rootNode +
+                  "/contacts_new/" +
+                  friendId +
+                  "/" +
+                  userId +
+                  "/"
+            )
+            .update({ unReadMessageCount: 0 });
+
+      //var updates = {};
+      //updates['/messages/' + chat_room] = {};
+      //firebase.database().ref().update(updates);
+      //firebase.database().ref().child('/messages/').set(chat_room);
+      // getUsers(logged_in_user_id,chat_room,true);
+      $(".message-type").addClass("hide");
+      var receiver_id = friendId;
+      /* var header_html = '<div class="cmn-user">'+
+                      '<i class="cmn-user-img">'+
+                          '<img src="'+friendImage+'" alt="">'+
+                      '</i>'+
+                      '<div class="cmn-user-name">'+
+                          '<h6><a href="javascript:;">'+friendUserName+'</a> </h6>'+
+                      '</div>'+
+                  '</div>'+
+                  '<div class="get-follow-status-'+logged_in_user_id+'-'+receiver_id+'">'+
+                  '</div>';*/
+
+      var header_html =
+            '<div class="header-img"><img id="user_image_' +
+            friendId +
+            '" src="' +
+            friendImage +
+            '" alt="" /></div>' +
+            '<div class="">' +
+            "<h5>" +
+            friendUserName +
+            "</h5>" +
+            "</div>" +
+            '<div class="get-follow-status-' +
+            logged_in_user_id +
+            "-" +
+            receiver_id +
+            '">' +
+            "</div>";
+      $(".message-user").html(header_html);
+      $(".msg_send_btn").attr("data-receiver-id", receiver_id);
+      $(".msg_send_btn").attr("data-chat-room", chat_room);
+      $(".msg_history").attr("data-chat-room", chat_room);
+      $(".msg_history").html("Connecting...!");
+
+      $("#search").hide();
+      //var message_ref = firebase.database().ref('messages/'+chat_room+'/');
+
+      var delHtml = "";
+      var lastDelMessageRef = firebase
+            .database()
+            .ref(
+                  rootNode +
+                  "/contacts_new/" +
+                  logged_in_user_id +
+                  "/" +
+                  receiver_id +
+                  "/lastDeletedMsgTimeStamp/"
+            );
+      lastDelMessageRef.on("value", function (snapshot) {
+            if (snapshot.val() !== null) {
+                  delHtml = snapshot.val();
+            }
+            //console.log(delHtml);
+      });
+
+      if (typeof delHtml == "undefined" || delHtml == "") {
+            var message_ref = firebase
+                  .database()
+                  .ref(rootNode + "/messages/" + chat_room + "/");
+            // console.log('if',message_ref);
+      } else {
+            // console.log('else',message_ref);
+            var message_ref = firebase
+                  .database()
+                  .ref(rootNode + "/messages/" + chat_room + "/")
+                  .orderByChild("timestamp")
+                  .startAt(delHtml);
+      }
+
+      message_ref.on("value", function (querySnapshot) {
+            // console.log("Message ref addUserToChat");
+            chatHTML = "";
+            if (querySnapshot.numChildren() > 0) {
+                  querySnapshot.forEach(function (doc) {
+                        if (
+                              doc.key != "unReadMessageCount" &&
+                              doc.key != "lastDeletedMsgTimeStamp"
+                        ) {
+                              /* if (doc.val().senderId == logged_in_user_id) {
+  chatHTML +=   '<div class="outgoing_msg">'+
+                  '<div class="sent_msg">'+
+                      '<p class="displayemoji_comment">'+ doc.val().message+'</p>'+
+                    '<span class="time_date">'+convertTimestamptoTime(doc.val().timestamp)+'</span>'+
+                  '</div>'+
+                '</div>';
+}else{
+chatHTML +=   '<div class="incoming_msg">'+
+                '<div class="incoming_msg_img">'+
+                    '<img src="'+friendImage+'" alt="">'+
+                '</div>'+
+                '<div class="received_msg">'+
+                  '<div class="received_withd_msg">'+
+                      '<p class="displayemoji_comment">'+ doc.val().message+'</p>'+
+                    '<span class="time_date">'+convertTimestamptoTime(doc.val().timestamp)+'</span>'+
+                  '</div>'+
+                '</div>'+
+              '</div>';
+}*/
+                              if (
+                                    doc.val().senderId ==
+                                    logged_in_user_id
+                              ) {
+                                    /*  chatHTML +=   '<li class="me">'+
+              '<div class="chat-img">'+
+                '<img src="'+friendImage+'" alt="">'+
+              '</div>'+
+              '<div class="entete">'+
+                '<span class="status green"></span>'+
+                '<h2>Vincent</h2>'+
+                  '<h3>'+convertTimestamptoTime(doc.val().timestamp)+'</h3>'+
+                '</div>'+
+                '<div class="triangle"></div>'+
+                '<div class="message">'+doc.val().message+'</div>'+
+            '</li>';
+}else{
+chatHTML +=   '<li class="you">'
+                 '<div class="chat-img">'+
+                   '<img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_01.jpg" alt="">'
+                 '</div>'+
+                 '<div class="entete">'+
+                    '<span class="status green"></span>'+
+                    '<h2>Vincent</h2>'+
+                    '<h3>'+convertTimestamptoTime(doc.val().timestamp)+'</h3>'+
+                  '</div>'+
+                  '<div class="triangle"></div>'+
+                  '<div class="message">'+doc.val().message+'</div>'+
+            '</li>';*/
+
+                                    // chatHTML +=   '<li class="me">'+
+                                    //                  '<div class="chat-img">'+
+                                    //                   '<img src="'+user_profile_image+'" alt="">'+
+                                    //                  '</div>'+
+                                    //                  '<div class="entete">'+
+                                    //                     '<span class="status green"></span>'+
+                                    //                     '<h2>Vincent</h2>'+
+                                    //                     '<h3>'+timeConverter(doc.val().timestamp)+'</h3>'+
+                                    //                   '</div>'+
+                                    //                   '<div class="triangle"></div>'+
+                                    //                   '<div class="message">'+doc.val().message+'</div>'+
+                                    //             '</li>';
+                                    //          }else{
+                                    // chatHTML +=   '<li class="you">'+
+                                    //               '<div class="chat-img">'+
+                                    //                 '<img class="chat_user_image" src="'+friendImage+'" alt="">'+
+                                    //               '</div>'+
+                                    //               '<div class="entete">'+
+                                    //                 '<span class="status green"></span>'+
+                                    //                 '<h2>Vincent</h2>'+
+                                    //                   '<h3>'+timeConverter(doc.val().timestamp)+'</h3>'+
+                                    //                 '</div>'+
+                                    //                 '<div class="triangle"></div>'+
+                                    //                 '<div class="message">'+doc.val().message+'</div>'+
+                                    //             '</li>';
+
+                                    chatHTML +=
+                                          '<li class="me">' +
+                                          '<div class="message">' +
+                                          '<span class="date-span 1">' +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</span>" +
+                                          (isImageUrl(doc.val().message) ? '<img src="' + doc.val().message + '" alt="Image" class="message-img"/>' : doc.val().message) +  //solving the chat gif issue
+                                          "</div>" +
+                                          '<div class="chat-img">' +
+                                          '<div class="triangle"></div>' +
+                                          '<img src="' + user_profile_image + '" alt="" style="height:50px; width:50px; object-fit: cover;">' +
+                                          "</div>" +
+                                          '<div class="entete">' +
+                                          "<h3>" +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</h3>" +
+                                          "<h2>" +
+                                          user_name +
+                                          "</h2>" +
+                                          // '<span class="status green"></span>'+
+                                          "</div>" +
+                                          "</li>";
+                              } else {
+                                    chatHTML +=
+                                          '<li class="you">' +
+                                          '<div class="chat-img">' +
+                                          '<img class="chat_user_image" src="' +
+                                          friendImage +
+                                          '" alt="" style="height:50px; max-width: 10%">' +
+                                          "</div>" +
+                                          '<div class="entete">' +
+                                          // '<span class="status '+online_status+'"></span>'+
+                                          "<h2>" +
+                                          friendUserName +
+                                          "</h2>" +
+                                          "<h3>" +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</h3>" +
+                                          "</div>" +
+                                          '<div class="triangle"></div>' +
+                                          '<div class="message">' +
+                                          '<span class="date-span 2">' +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</span>" +
+                                          doc.val().message +
+                                          "</div>" +
+                                          "</li>";
+
+                                    /*chatHTML +=   '<li class="you">'+
+                     '<div class="message">'+
+                     '<span class="date-span">'+timeConverter(doc.val().timestamp)+'</span>'+doc.val().message+'</div>'+
+                     '<div class="chat-img">'+
+                      '<div class="triangle"></div>'+
+                       '<img src="'+friendImage+'" alt="" style="height:50px;">'+
+                     '</div>'+
+                     '<div class="entete">'+
+                        '<h3>'+timeConverter(doc.val().timestamp)+'</h3>'+
+                        '<h2>'+friendUserName+'</h2>'+
+                       // '<span class="status green"></span>'+
+                      '</div>'+
+                '</li>';*/
+                              }
+                        }
+                  });
+            } else {
+                  if (friendUserName != "")
+                        chatHTML = "Say Hi to " + friendUserName;
+            }
+            $(".msg_history[data-chat-room='" + chat_room + "']").html(
+                  chatHTML
+            );
+            $(".message-type").removeClass("hide");
+            $(".msg_history[data-chat-room='" + chat_room + "']").scrollTop(
+                  $(".msg_history")[0].scrollHeight
+            );
+      });
+      setActiveChatRoom(userId, chat_room);
+      get_follow_status(userId, receiver_id);
+}
+
+function isImageUrl(url) {
+      return /\.(jpeg|jpg|gif|png|svg|webp)(\?.*)?$/i.test(url);
+}
+
+function getParameterByImage(name, url) {
+      if (url != null && url.trim() !== "") {
+            name = name.replace(/[\[\]]/g, "\\$&");
+            const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+            const results = regex.exec(url);
+            if (!results) return url;
+            if (!results[2]) return "";
+            let paramValue = decodeURIComponent(
+                  results[2].replace(/\+/g, " ")
+            );
+
+            // Check if the parameter value is a base64 encoded URL
+            try {
+                  const decodedValue = atob(paramValue);
+                  if (
+                        decodedValue.startsWith("http") ||
+                        decodedValue.startsWith("https")
+                  ) {
+                        paramValue = decodedValue;
+                  }
+            } catch (e) {
+                  console.error("Error decoding base64 URL:", e);
+            }
+            return paramValue;
+      } else {
+            return "https://zoebook.mydevfactory.com/public/images/noimage.gif";
+      }
+}
+
+function getUsers(logged_in_user_id) {
+      var usersHTML = "";
+      var NewusersHTML = "";
+      var messageCount = 0;
+      var contacts_new_ref = firebase
+            .database()
+            .ref(rootNode + "/contacts_new/" + logged_in_user_id + "/");
+      // usersHTML += '<ul>';
+      contacts_new_ref.once("value").then(function (querySnapshot) {
+            if (querySnapshot.numChildren() > 0) {
+                  var friendsList = Array(querySnapshot.numChildren());
+                  querySnapshot.forEach(function (doc) {
+                        var friend_data = doc.val();
+                        if (friend_data) friendsList.push(doc.key);
+                        // console.log(doc.key,'data');
+                        if (
+                              typeof friend_data.LastMessage !=
+                              "undefined" &&
+                              friend_data.LastMessage.isDeleted ==
+                              true
+                        ) {
+                              //hb0129
+                              // deleted user
+                              // } else if(typeof(friend_data.BasicDetails) != "undefined" && friend_data.BasicDetails != null) { //hb0129
+                        } else if (friend_data.BasicDetails) {
+                              //hb0129
+                              /*firebase.database().ref(rootNode+'/users/'+doc.key).once('value',function(snapshot){
+          friend_data = snapshot.val();*/
+                              if (
+                                    friend_data.unReadMessageCount >
+                                    0
+                              ) {
+                                    var badgeHtml =
+                                          '<span class="badge badge-system badge-pill">' +
+                                          friend_data.unReadMessageCount +
+                                          "</span>";
+                              } else {
+                                    var badgeHtml = "";
+                              }
+                              user_status =
+                                    friend_data.BasicDetails
+                                          .isOnline == true
+                                          ? "green"
+                                          : "blue";
+                              var lastMessageRef = firebase
+                                    .database()
+                                    .ref(
+                                          rootNode +
+                                          "/contacts_new/" +
+                                          logged_in_user_id +
+                                          "/" +
+                                          doc.key +
+                                          "/LastMessage/"
+                                    );
+                              lastMessageRef.on(
+                                    "value",
+                                    function (snapshot) {
+                                          if (
+                                                snapshot.val() !==
+                                                null &&
+                                                snapshot
+                                                      .val()
+                                                      .hasOwnProperty(
+                                                            "lastMessage"
+                                                      )
+                                          ) {
+                                                var lmHtml =
+                                                      snapshot.val()
+                                                            .lastMessage;
+                                          } else {
+                                                var lmHtml = "";
+                                          }
+
+                                          const encodedImage =
+                                                getParameterByImage(
+                                                      "pic",
+                                                      friend_data
+                                                            .BasicDetails
+                                                            .image
+                                                );
+                                          // console.log(encodedImage);
+                                          usersHTML +=
+                                                '<li class="chatListLi">' +
+                                                '<div class="cmn-user chat-user" uuid="' +
+                                                friend_data
+                                                      .BasicDetails
+                                                      .chatRoom +
+                                                '" data-name="' +
+                                                friend_data
+                                                      .BasicDetails
+                                                      .userName +
+                                                '" data-avatar="' +
+                                                encodedImage +
+                                                '" data-user-id="' +
+                                                doc.key +
+                                                '">' +
+                                                '<i class="cmn-user-img"><img id="friend_image_' +
+                                                doc.key +
+                                                '" src="' +
+                                                encodedImage +
+                                                '" alt=""><span id="friend_' +
+                                                doc.key +
+                                                '" class="friend_status ' +
+                                                user_status +
+                                                '"></span></i>' +
+                                                '<div class="cmn-user-name"><h6><a href="javascript:;">' +
+                                                friend_data
+                                                      .BasicDetails
+                                                      .userName +
+                                                "</a>" +
+                                                '<span class="last-message displayemoji_comment">' +
+                                                lmHtml +
+                                                '</span><span class="last-message-time">' +
+                                                timeSince(
+                                                      snapshot.val()
+                                                            .lastMessageTimeStamp
+                                                ) +
+                                                '</span></h6></div><div class="badge-div">' +
+                                                badgeHtml +
+                                                "</div></div>";
+
+                                          usersHTML +=
+                                                '<div class="deletechat" userid="' +
+                                                doc.key +
+                                                '" userchatroom="' +
+                                                friend_data
+                                                      .BasicDetails
+                                                      .chatRoom +
+                                                '" username="' +
+                                                friend_data
+                                                      .BasicDetails
+                                                      .userName +
+                                                '"><i class="fa fa-window-close" style="font-size: 20px;color: #4f81bd;"></i></div>';
+                                          usersHTML += "</li>";
+
+                                          NewusersHTML +=
+                                                '<img id="h_friend_' +
+                                                doc.key +
+                                                '" src="' +
+                                                friend_data
+                                                      .BasicDetails
+                                                      .image +
+                                                '" alt="">';
+                                          /* });
+                                           */
+
+                                          var unreadCountRef =
+                                                firebase
+                                                      .database()
+                                                      .ref(
+                                                            rootNode +
+                                                            "/contacts_new/" +
+                                                            logged_in_user_id +
+                                                            "/" +
+                                                            doc.key +
+                                                            "/unReadMessageCount/"
+                                                      );
+                                          unreadCountRef.on(
+                                                "value",
+                                                function (
+                                                      snapshot
+                                                ) {
+                                                      if (
+                                                            snapshot.val() !==
+                                                            null &&
+                                                            snapshot.val() >
+                                                            0
+                                                      ) {
+                                                            var badgeHtml =
+                                                                  '<span class="badge badge-system badge-pill">' +
+                                                                  snapshot.val() +
+                                                                  "</span>";
+                                                            // messageCount = messageCount + parseInt(snapshot.val());
+                                                      } else {
+                                                            var badgeHtml =
+                                                                  "";
+                                                      }
+                                                      $(
+                                                            "div[uuid='" +
+                                                            friend_data
+                                                                  .BasicDetails
+                                                                  .chatRoom +
+                                                            "']"
+                                                      )
+                                                            .find(
+                                                                  "div.badge-div"
+                                                            )
+                                                            .html(
+                                                                  badgeHtml
+                                                            );
+                                                }
+                                          );
+
+                                          $(
+                                                "div[uuid='" +
+                                                friend_data
+                                                      .BasicDetails
+                                                      .chatRoom +
+                                                "']"
+                                          )
+                                                .find(
+                                                      "span.last-message"
+                                                )
+                                                .html(lmHtml);
+                                          $(
+                                                ".displayemoji_comment"
+                                          ).each(function (i, e) {
+                                                var content =
+                                                      $(
+                                                            e
+                                                      ).html();
+                                                $(e).html("");
+                                                window.emojiPicker.appendUnicodeAsImageToElement(
+                                                      $(e),
+                                                      content
+                                                );
+                                                $(e).show();
+                                          });
+                                    }
+                              );
+                        }
+                  });
+                  // usersHTML += '</ul>';
+            } else {
+                  usersHTML += "<ul><li>No Chats Yet</li></ul>";
+                  NewusersHTML += "";
+            }
+
+            $(".friends-list").html(NewusersHTML);
+            $(".inbox_chat_list").empty();
+            $(".inbox_chat_list").html(usersHTML);
+            // console.log(friendsList,'friends');
+            friendsList.forEach(function (key, i) {
+                  // console.log(key,i);
+                  if (key) {
+                        firebase.database()
+                              .ref(rootNode + "/users/" + key + "/")
+                              .on("value", function (snapshot) {
+                                    friend_data = snapshot.val();
+                                    if (friend_data) {
+                                          snapshot.forEach(
+                                                (
+                                                      childSnapshot
+                                                ) => {
+                                                      // console.log(childSnapshot.key,childSnapshot.val());
+                                                }
+                                          );
+
+                                          // console.log('friend_data:'+snapshot.key ,friend_data);
+                                          user_status =
+                                                friend_data.isOnline ==
+                                                      true
+                                                      ? " green"
+                                                      : " blue";
+                                          $(
+                                                "#friend_" +
+                                                snapshot.key
+                                          )
+                                                .removeAttr(
+                                                      "class"
+                                                )
+                                                .addClass(
+                                                      "friend_status " +
+                                                      user_status
+                                                );
+                                          $(
+                                                "#head_friend_" +
+                                                snapshot.key
+                                          )
+                                                .removeAttr(
+                                                      "class"
+                                                )
+                                                .addClass(
+                                                      "status " +
+                                                      user_status
+                                                );
+                                          if (
+                                                friend_data.profileImage
+                                          ) {
+                                                profile_image =
+                                                      friend_data.profileImage;
+                                                // console.log(profile_image);
+                                                // $("#friend_image_"+snapshot.key).attr('src',profile_image);
+                                                $(
+                                                      "#h_friend_" +
+                                                      snapshot.key
+                                                ).attr(
+                                                      "src",
+                                                      profile_image
+                                                );
+                                                // $("#user_image_"+snapshot.key).attr('src',profile_image);
+                                                $(
+                                                      ".msg_history[data-chat-room='" +
+                                                      logged_in_user_id +
+                                                      "_" +
+                                                      key +
+                                                      "']"
+                                                )
+                                                      .find(
+                                                            ".chat_user_image"
+                                                      )
+                                                      .attr(
+                                                            "src",
+                                                            profile_image
+                                                      );
+                                                console.log(
+                                                      "Updated Here Profile Image"
+                                                );
+                                          } else {
+                                          }
+                                    }
+                              });
+                  }
+            });
+      });
+      getUnreadTotalCount(logged_in_user_id);
+}
+
+//$(document.body).on('click', '.chat-user', function(){
+$(document).on("click", ".chat-user", function () {
+      $(".message-type").addClass("hide");
+      $("#search").hide();
+      name = $(this).attr("data-name");
+      if (chat_room != "")
+            firebase.database()
+                  .ref(rootNode + "/messages/" + chat_room + "/")
+                  .off();
+      chat_room = $(this).attr("uuid");
+      receiver_id = $(this).attr("data-user-id");
+      chat_avatar = $(this).attr("data-avatar");
+      online_status = "blue";
+      setActiveChatRoom(logged_in_user_id, chat_room);
+
+      /*var header_html = '<div class="cmn-user">'+
+                          '<i class="cmn-user-img">'+
+                              '<img src="'+chat_avatar+'" alt="">'+
+                          '</i>'+
+                          '<div class="cmn-user-name">'+
+                              '<h6><a href="javascript:;">'+name+'</a> </h6>'+
+                          '</div>'+
+                      '</div>'+
+                      '<div class="get-follow-status-'+logged_in_user_id+'-'+receiver_id+'">'+
+                      '</div>';*/
+      firebase.database()
+            .ref(rootNode + "/users/" + receiver_id + "/")
+            .once("value")
+            .then(function (querySnapshot) {
+                  var online = querySnapshot
+                        .val()
+                        .hasOwnProperty("isOnline")
+                        ? querySnapshot.val().isOnline
+                        : false;
+
+                  if (online == true) {
+                        online_status = "green";
+                  } else {
+                        online_status = "blue";
+                  }
+                  if (
+                        querySnapshot
+                              .val()
+                              .hasOwnProperty("profileImage")
+                  ) {
+                        // chat_avatar = querySnapshot.val().profileImage;
+                        $("#user_image_" + receiver_id).attr(
+                              "src",
+                              chat_avatar
+                        );
+                        // console.log(chat_avatar,'once function');
+                  }
+
+                  $("#head_friend_" + querySnapshot.key)
+                        .removeAttr("class")
+                        .addClass("status " + online_status);
+            });
+      // console.log(chat_avatar,'click function');
+
+      /*var header_html = '<img id="user_image_'+receiver_id+'" src="" alt="">'+
+                '<span id="head_friend_'+receiver_id+'" class="status '+online_status+'"></span>'+
+                 '<div class="cmn-user-name">'+
+                   '<h2>'+name+'</h2>'+
+                 '</div>'+
+                 '<div class="get-follow-status-'+logged_in_user_id+'-'+receiver_id+'">'+
+                 '</div>';*/
+      // console.log(2);
+      var urlName = name.replace(/\s+/g, "").toLowerCase();
+      // console.log('https://zoebook.mydevfactory.com/user-profile-'+receiver_id+'-'+urlName+'.html');
+      var profileUrl =
+            "https://zoebook.com/user-profile-" +
+            receiver_id +
+            "-" +
+            urlName +
+            ".html";
+      var header_html =
+            '<div class="header-img"><img id="user_image_' +
+            receiver_id +
+            '" src="' +
+            chat_avatar +
+            '" alt="">' +
+            '<span id="head_friend_' +
+            receiver_id +
+            '" class="status ' +
+            online_status +
+            '"></span></div>' +
+            '<div class="">' +
+            '<a href="' +
+            profileUrl +
+            '"><h5>' +
+            name +
+            "</h5></a>" +
+            "</div>" +
+            '<div class="get-follow-status-' +
+            logged_in_user_id +
+            "-" +
+            receiver_id +
+            '">' +
+            "</div>";
+      $(".message-user").html(header_html);
+
+      // console.log(online_status);
+      $(".msg_send_btn").attr("data-receiver-id", receiver_id);
+      $(".msg_send_btn").attr("data-chat-room", chat_room);
+      $(".msg_history").attr("data-chat-room", chat_room);
+      $(".msg_history").html("Connecting...!");
+      $(".message-container").html("Say Hi to " + name);
+
+      var delHtml = "";
+      var lastDelMessageRef = firebase
+            .database()
+            .ref(
+                  rootNode +
+                  "/contacts_new/" +
+                  logged_in_user_id +
+                  "/" +
+                  receiver_id +
+                  "/lastDeletedMsgTimeStamp/"
+            );
+      lastDelMessageRef.on("value", function (snapshot) {
+            if (snapshot.val() !== null) {
+                  delHtml = snapshot.val();
+            }
+            //console.log(delHtml);
+      });
+
+      if (typeof delHtml == "undefined" || delHtml == "") {
+            var message_ref = firebase
+                  .database()
+                  .ref(rootNode + "/messages/" + chat_room + "/")
+                  .orderByChild("timestamp")
+                  .limitToLast(msglimit);
+      } else {
+            var message_ref = firebase
+                  .database()
+                  .ref(rootNode + "/messages/" + chat_room + "/")
+                  .orderByChild("timestamp")
+                  .startAt(delHtml)
+                  .limitToLast(msglimit);
+      }
+      // console.log(rootNode+'/messages/'+chat_room+'/');
+
+      /*message_ref.once("value")
+.then(function(snapshot) {
+    lastMessageValue = snapshot.key;
+});*/
+      message_ref.on("value", function (querySnapshot) {
+            // console.log("Message ref on chat user clicked");
+            chatHTML = "";
+            if (querySnapshot.numChildren() > 0) {
+                  lastMessageValue = "";
+                  querySnapshot.forEach(function (doc) {
+                        if (!lastMessageValue)
+                              lastMessageValue = doc.key;
+                        if (doc.key != "unReadMessageCount") {
+                              if (
+                                    doc.val().senderId ==
+                                    logged_in_user_id
+                              ) {
+                                    /* chatHTML +=   '<div class="outgoing_msg">'+
+                    '<div class="sent_msg">'+
+                        '<p class="displayemoji_comment">'+ doc.val().message+'</p>'+
+                      '<span class="time_date">'+convertTimestamptoTime(doc.val().timestamp)+'</span>'+
+                    '</div>'+
+                  '</div>';
+    }else{
+      chatHTML +=   '<div class="incoming_msg">'+
+                      '<div class="incoming_msg_img">'+
+                          '<img src="'+chat_avatar+'" alt="">'+
+                      '</div>'+
+                      '<div class="received_msg">'+
+                        '<div class="received_withd_msg">'+
+                            '<p class="displayemoji_comment">'+ doc.val().message+'</p>'+
+                          '<span class="time_date">'+convertTimestamptoTime(doc.val().timestamp)+'</span>'+
+                        '</div>'+
+                      '</div>'+
+                    '</div>';*/
+
+                                    chatHTML +=
+                                          '<li class="me">' +
+                                          '<div class="message">' +
+                                          '<span class="date-span 3">' +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</span>" +
+                                          (isImageUrl(
+                                                doc.val()
+                                                      .message
+                                          )
+                                                ? '<img src="' +
+                                                doc.val()
+                                                      .message +
+                                                '" alt="Image" class="message-img"/>'
+                                                : doc.val()
+                                                      .message) +
+                                          "</div>" +
+                                          '<div class="chat-img">' +
+                                          '<div class="triangle"></div>' +
+                                          '<img src="' +
+                                          user_profile_image +
+                                          '" alt="" style="height:50px; width:50px; object-fit: cover;"">' +
+                                          "</div>" +
+                                          '<div class="entete">' +
+                                          "<h3>" +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</h3>" +
+                                          "<h2>" +
+                                          user_name +
+                                          "</h2>" +
+                                          // '<span class="status green"></span>'+
+                                          "</div>" +
+                                          "</li>";
+                              } else {
+                                    chatHTML +=
+                                          '<li class="you">' +
+                                          '<div class="chat-img">' +
+                                          '<img class="chat_user_image" src="' +
+                                          chat_avatar +
+                                          '" alt="" style="height:50px; max-width: 10%">' +
+                                          "</div>" +
+                                          '<div class="entete">' +
+                                          // '<span class="status '+online_status+'"></span>'+
+                                          "<h2>" +
+                                          name +
+                                          "</h2>" +
+                                          "<h3>" +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</h3>" +
+                                          "</div>" +
+                                          '<div class="triangle"></div>' +
+                                          '<div class="message">' +
+                                          '<span class="date-span 4">' +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</span>" +
+                                          (isImageUrl(
+                                                doc.val()
+                                                      .message
+                                          )
+                                                ? '<img src="' +
+                                                doc.val()
+                                                      .message +
+                                                '" alt="Image" class="message-img"/>'
+                                                : doc.val()
+                                                      .message) +
+                                          "</div>" +
+                                          "</li>";
+                              }
+                        }
+                  });
+            } else {
+                  chatHTML = "Say Hi to " + name;
+            }
+
+            $(".msg_history[data-chat-room='" + chat_room + "']").html(
+                  chatHTML
+            );
+            $(".message-type").removeClass("hide");
+            $(".displayemoji_comment").each(function (i, e) {
+                  var content = $(e).html();
+                  $(e).html("");
+                  window.emojiPicker.appendUnicodeAsImageToElement(
+                        $(e),
+                        content
+                  );
+                  $(e).show();
+            });
+            $(".msg_history[data-chat-room='" + chat_room + "']").scrollTop(
+                  $(".msg_history")[0].scrollHeight
+            );
+            var unreadCount = 0;
+            var unreadCountUpdates = {};
+            var users = chat_room.split("_");
+            // console.log(users);
+            var user_id = users[0];
+            var other_id = users[1];
+            unreadCountUpdates[
+                  rootNode +
+                  "/contacts_new/" +
+                  user_id +
+                  "/" +
+                  other_id +
+                  "/unReadMessageCount/"
+            ] = unreadCount;
+            firebase.database().ref().update(unreadCountUpdates);
+            getUnreadTotalCount(logged_in_user_id);
+      });
+      var unreadCount = 0;
+      var unreadCountUpdates = {};
+      unreadCountUpdates[
+            rootNode +
+            "/contacts_new/" +
+            logged_in_user_id +
+            "/" +
+            receiver_id +
+            "/unReadMessageCount/"
+      ] = unreadCount;
+      firebase.database().ref().update(unreadCountUpdates);
+      get_follow_status(logged_in_user_id, receiver_id);
+      getUnreadTotalCount(logged_in_user_id);
+});
+
+function get_follow_status(user_id, profile_user_id) {
+      var params = {};
+      params["user_id"] = user_id;
+      params["profile_user_id"] = profile_user_id;
+      var html = "";
+      $.ajax({
+            type: "post",
+            url: site_url + "content/content/get_user_profile",
+            data: params,
+            dataType: "json",
+            success: function (response) {
+                  if (response.length > 0) {
+                        if (response[0].is_follwing == "No") {
+                              html +=
+                                    '<button class="mobileChat"><i class="fa fa-user" aria-hidden="true"></i></button><button class="btn btn-primary" onclick="followUser(' +
+                                    user_id +
+                                    "," +
+                                    profile_user_id +
+                                    ');">Follow</button>';
+                        } else if (response[0].is_follwing == "Yes") {
+                              html +=
+                                    '<button class="mobileChat"><i class="fa fa-user" aria-hidden="true"></i></button><button class="btn btn-info" onclick="unFollowUser(' +
+                                    user_id +
+                                    "," +
+                                    profile_user_id +
+                                    ');">Unfollow</button>';
+                        } else if (
+                              response[0].is_follwing == "Pending"
+                        ) {
+                              html +=
+                                    '<button class="mobileChat"><i class="fa fa-user" aria-hidden="true"></i></button><button class="btn btn-danger cancelRequest-btn" onclick="cancelRequest(' +
+                                    user_id +
+                                    "," +
+                                    profile_user_id +
+                                    "," +
+                                    response[0].pending_request_id +
+                                    ');">Cancel Request</button>';
+                        }
+                        $(
+                              ".get-follow-status-" +
+                              logged_in_user_id +
+                              "-" +
+                              profile_user_id
+                        ).html(html);
+                  }
+            },
+      });
+}
+
+function cancelRequest(user_id, profile_user_id, user_follow_request_id) {
+      swal({
+            title: "Are you sure?",
+            text: "You want to cancel follow request ?",
+            icon: "info",
+            buttons: {
+                  cancel: {
+                        text: "No",
+                        visible: true,
+                        closeModal: true,
+                  },
+                  confirm: {
+                        text: "Yes",
+                        visible: true,
+                        closeModal: false,
+                  },
+            },
+            dangerMode: false,
+      }).then((share) => {
+            if (share) {
+                  var params = {};
+                  params["user_id"] = user_id;
+                  params["profile_user_id"] = profile_user_id;
+                  params["user_follow_request_id"] =
+                        user_follow_request_id;
+                  var html = "";
+                  $.ajax({
+                        type: "post",
+                        url:
+                              site_url +
+                              "content/content/set_follow_accept_reject_cancel",
+                        data: params,
+                        dataType: "json",
+                        success: function (response) {
+                              swal(
+                                    "success",
+                                    response["settings"]["message"],
+                                    "success"
+                              ).then((response) => {
+                                    html +=
+                                          '<button class="btn btn-primary" onclick="followUser(' +
+                                          user_id +
+                                          "," +
+                                          profile_user_id +
+                                          ');">Follow</button>';
+                                    $(
+                                          ".get-follow-status-" +
+                                          logged_in_user_id +
+                                          "-" +
+                                          profile_user_id
+                                    ).html(html);
+                              });
+                        },
+                  });
+            } else {
+                  return true;
+            }
+      });
+}
+
+function followUser(user_id, profile_user_id) {
+      swal({
+            title: "Are you sure?",
+            text: "You want to follow ?",
+            icon: "info",
+            buttons: {
+                  cancel: {
+                        text: "No",
+                        visible: true,
+                        closeModal: true,
+                  },
+                  confirm: {
+                        text: "Yes",
+                        visible: true,
+                        closeModal: false,
+                  },
+            },
+            dangerMode: false,
+      }).then((share) => {
+            if (share) {
+                  var params = {};
+                  params["user_id"] = user_id;
+                  params["following_user_id"] = profile_user_id;
+                  var html = "";
+                  $.ajax({
+                        type: "post",
+                        url: site_url + "content/content/follow_user",
+                        data: params,
+                        dataType: "json",
+                        success: function (response) {
+                              swal(
+                                    "success",
+                                    response["settings"]["message"],
+                                    "success"
+                              ).then((value) => {
+                                    html +=
+                                          '<button class="btn btn-danger" onclick="cancelRequest(' +
+                                          user_id +
+                                          "," +
+                                          profile_user_id +
+                                          "," +
+                                          response["data"][0]
+                                                .pending_request_id +
+                                          ');">Cancel Request</button>';
+                                    $(
+                                          ".get-follow-status-" +
+                                          logged_in_user_id +
+                                          "-" +
+                                          profile_user_id
+                                    ).html(html);
+                              });
+                        },
+                  });
+            } else {
+                  return false;
+            }
+      });
+}
+
+function unFollowUser(user_id, profile_user_id) {
+      swal({
+            title: "Are you sure?",
+            text: "You want to unfollow ?",
+            icon: "info",
+            buttons: {
+                  cancel: {
+                        text: "No",
+                        visible: true,
+                        closeModal: true,
+                  },
+                  confirm: {
+                        text: "Yes",
+                        visible: true,
+                        closeModal: false,
+                  },
+            },
+            dangerMode: false,
+      }).then((share) => {
+            if (share) {
+                  var params = {};
+                  params["user_id"] = user_id;
+                  params["following_user_id"] = profile_user_id;
+                  var html = "";
+                  $.ajax({
+                        type: "post",
+                        url: site_url + "content/content/unfollow_user",
+                        data: params,
+                        dataType: "json",
+                        success: function (response) {
+                              swal(
+                                    "success",
+                                    response["settings"]["message"],
+                                    "success"
+                              ).then((value) => {
+                                    html +=
+                                          '<button class="btn btn-primary" onclick="followUser(' +
+                                          user_id +
+                                          "," +
+                                          profile_user_id +
+                                          ');">Follow</button>';
+                                    $(
+                                          ".get-follow-status-" +
+                                          logged_in_user_id +
+                                          "-" +
+                                          profile_user_id
+                                    ).html(html);
+                              });
+                        },
+                  });
+            } else {
+                  return false;
+            }
+      });
+}
+
+function convertTimestamptoTime(unixTimestamp) {
+      // convert to milliseconds
+      // and then create a new Date object
+      dateObj = new Date(unixTimestamp);
+      var CurrentDate = new Date();
+      if (dateObj < CurrentDate) {
+            return dateObj.toLocaleString();
+      } else {
+            return dateObj.toLocaleTimeString();
+      }
+}
+
+function timeConverter(UNIX_timestamp) {
+      var a = new Date(UNIX_timestamp);
+      var months = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+      ];
+      var year = a.getFullYear();
+      var month = months[a.getMonth()];
+      var date = a.getDate();
+      var hour = a.getHours();
+      var min = a.getMinutes();
+      var sec = a.getSeconds();
+      var hours = hour % 12;
+      var ampm = hours >= 12 ? "AM" : "PM";
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      var minutes = min < 10 ? "0" + min : min;
+      var strTime = hours + ":" + minutes + " " + ampm;
+
+      var time = date + ", " + month + " " + year + " @ " + strTime;
+      return time;
+}
+
+function sendMessage(senderId, receiverId, chatroomId, message) {
+      if (message != "") {
+            var ts = new Date().getTime();
+            var postData = {
+                  isRead: false,
+                  message: message.toString(),
+                  receiverId: receiverId.toString(),
+                  senderId: senderId.toString(),
+                  timestamp: ts,
+                  type: "Text",
+            };
+            var newPostKey = firebase
+                  .database()
+                  .ref(rootNode + "/messages")
+                  .child(chatroomId)
+                  .push().key;
+            var updates = {};
+            updates[
+                  rootNode + "/messages/" + chatroomId + "/" + newPostKey
+            ] = postData;
+            firebase.database()
+                  .ref()
+                  .update(updates)
+                  .then(function (docRef) {
+                        // console.log("Message ref sendMessage");
+                        var lastMessageData = {
+                              isDeleted: false,
+                              lastMessage: message.toString(),
+                              lastMessageSendId: senderId.toString(),
+                              lastMessageTimeStamp: ts,
+                        };
+                        var lastMessageUpdates = {};
+                        lastMessageUpdates[
+                              rootNode +
+                              "/contacts_new/" +
+                              senderId +
+                              "/" +
+                              receiverId +
+                              "/LastMessage/"
+                        ] = lastMessageData;
+                        lastMessageUpdates[
+                              rootNode +
+                              "/contacts_new/" +
+                              receiverId +
+                              "/" +
+                              senderId +
+                              "/LastMessage/"
+                        ] = lastMessageData;
+                        firebase.database()
+                              .ref()
+                              .update(lastMessageUpdates);
+
+                        updateUnreadCount(
+                              senderId,
+                              receiverId,
+                              chatroomId
+                        );
+                        updateUnreadCount(
+                              receiverId,
+                              senderId,
+                              chatroomId
+                        );
+
+                        $(".message-input").val("");
+                        $(".emoji-wysiwyg-editor").html("");
+                  })
+                  .catch(function (error) {
+                        console.error("Error adding document: ", error);
+                  });
+            $(".message-input").val("");
+            $(".emoji-wysiwyg-editor").html("");
+      }
+      $(".msg_history").scrollTop($(".msg_history")[0].scrollHeight);
+      getUnreadTotalCount(senderId);
+}
+
+
+//for uloading image
+function uploadImage(file, chatroomId, newPostKey, postData, senderId, receiverId, ts) {
+      const storage = firebase.storage();
+      const storageRef = storage.ref();
+      const imageRef = storageRef.child(`chat_images/${chatroomId}/${newPostKey}`);
+
+      const uploadTask = imageRef.put(file);
+
+      uploadTask.on('state_changed',
+            (snapshot) => {
+                  const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                  console.log('Upload is ' + progress + '% done');
+                  switch (snapshot.state) {
+                        case 'paused':
+                              console.log('Upload is paused');
+                              break;
+                        case 'running':
+                              console.log('Upload is running');
+                              break;
+                  }
+            },
+            (error) => {
+                  console.error("Error uploading image: ", error);
+            },
+            () => {
+                  uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                        console.log('File available at', downloadURL);
+                        postData.message = downloadURL;
+                        saveMessageToDatabase(chatroomId, postData, senderId, receiverId, ts);
+                  });
+            }
+      );
+}
+
+
+function updateUnreadCount(senderId, receiverId, chatroomId) {
+      firebase.database()
+            .ref(rootNode + "/users/" + senderId + "/")
+            .child("activeChatRoom")
+            .once("value", function (snapshot) {
+                  if (snapshot.val() != chatroomId) {
+                        firebase.database()
+                              .ref(
+                                    rootNode +
+                                    "/contacts_new/" +
+                                    senderId +
+                                    "/" +
+                                    receiverId +
+                                    "/"
+                              )
+                              .child("unReadMessageCount")
+                              .once("value", function (snapshot) {
+                                    var exists =
+                                          snapshot.val() >= 0;
+                                    if (exists) {
+                                          var unreadCount =
+                                                snapshot.val() +
+                                                1;
+                                          var unreadCountUpdates =
+                                                {};
+                                          unreadCountUpdates[
+                                                rootNode +
+                                                "/contacts_new/" +
+                                                senderId +
+                                                "/" +
+                                                receiverId +
+                                                "/unReadMessageCount/"
+                                          ] = unreadCount;
+                                          firebase.database()
+                                                .ref()
+                                                .update(
+                                                      unreadCountUpdates
+                                                );
+                                    } else {
+                                          var unreadCount = 1;
+                                          firebase.database()
+                                                .ref(
+                                                      rootNode +
+                                                      "/contacts_new/" +
+                                                      senderId +
+                                                      "/" +
+                                                      receiverId +
+                                                      "/"
+                                                )
+                                                .update({
+                                                      unReadMessageCount:
+                                                            unreadCount,
+                                                });
+                                    }
+                              });
+                  }
+            });
+}
+
+function setActiveChatRoom(senderId, chat_room) {
+      $(".message-user").show();
+      if (chat_room != "") $(".message-type").show();
+      firebase.database()
+            .ref(rootNode + "/users/" + senderId + "/")
+            .update({ activeChatRoom: chat_room });
+      // console.log(firebase.database().ref(rootNode+'/users/'+senderId+'/activeChatRoom').get(),'setchatroom');
+}
+
+// $('.message-input').bind('keypress', function(e) {
+$(document).on("keypress", ".message-input", function (e) {
+      if (e.keyCode == 13) {
+            var senderId = logged_in_user_id;
+            var receiverId = $(".msg_send_btn").attr("data-receiver-id");
+            var chatroomId = $(".msg_send_btn").attr("data-chat-room");
+            var message = $(this)
+                  .closest(".input_msg_write")
+                  .find(".message-input")
+                  .val();
+            sendMessage(senderId, receiverId, chatroomId, message);
+      } else {
+            return true;
+      }
+});
+
+$(".msg_send_btn").on("click", function () {
+      var senderId = logged_in_user_id;
+      var receiverId = $(".msg_send_btn").attr("data-receiver-id");
+      var chatroomId = $(this).attr("data-chat-room");
+      var message = $(this)
+            .closest(".input_msg_write")
+            .find(".message-input")
+            .val();
+      sendMessage(senderId, receiverId, chatroomId, message);
+});
+
+// the enter key code
+$(".message-type").keypress(function (e) {
+      var key = e.which;
+      if (key == 13) {
+            $(".msg_send_btn").click();
+      }
+});
+
+//$(document.body).on('click', '.deletechat', function(e){ //hb0129
+$(document).on("click", ".deletechat", function () {
+      var friendname = $(this).attr("username");
+      var ts = new Date().getTime();
+
+      if (
+            confirm(
+                  "This action will remove all chat history with " +
+                  friendname +
+                  ". Are you Sure?"
+            )
+      ) {
+            var lastMessageData = {
+                  isDeleted: true,
+            };
+            firebase.database()
+                  .ref(
+                        rootNode +
+                        "/contacts_new/" +
+                        logged_in_user_id +
+                        "/" +
+                        $(this).attr("userid") +
+                        "/LastMessage/"
+                  )
+                  .update(lastMessageData);
+
+            var deletemessageupdate = {
+                  lastDeletedMsgTimeStamp: ts,
+            };
+            firebase.database()
+                  .ref(
+                        rootNode +
+                        "/contacts_new/" +
+                        logged_in_user_id +
+                        "/" +
+                        $(this).attr("userid") +
+                        "/"
+                  )
+                  .update(deletemessageupdate);
+
+            getUsers(logged_in_user_id);
+
+            //friendsList.remove($(this).attr('userid'));
+            for (n = 0; n < friendsList.length; n++) {
+                  if (friendsList[n] === $(this).attr("userid")) {
+                        friendsList.splice(n, 1);
+                  }
+            }
+
+            $(".message-user").html(
+                  '<div><h2 style="width: 140%">Welcome to Zoebook Chat.</h2></div><button class="mobileChat"><i class="fa fa-user" aria-hidden="true"></i></button>'
+            );
+            $(".message-type").hide();
+            // console.log($(this).attr('userchatroom'));
+            // $(".msg_history").html('<div class="inbox_msg"><div class="mesgs"><div><h3>Welcome to Zoebook Chat.</h3><h4>Lets Connect to the World.</h4></div></div></div>');
+            $(".msg_history").html(
+                  "<h3></h3><h3></h3><h4>Lets Connect to the World.</h4>"
+            );
+      }
+});
+
+function openChatBox(
+      logged_in_user_id,
+      friendId,
+      friendUserName,
+      friendEmail,
+      friendImage
+) {
+      var chatbox_ref = firebase
+            .database()
+            .ref(
+                  rootNode +
+                  "/contacts_new/" +
+                  logged_in_user_id +
+                  "/" +
+                  friendId +
+                  "/"
+            );
+      chatbox_ref.once("value").then(function (querySnapshot) {
+            if (querySnapshot.numChildren() > 0) {
+                  var chat_room =
+                        querySnapshot.val().BasicDetails.chatRoom;
+                  setActiveChatRoom(logged_in_user_id, chat_room);
+                  $("div[uuid='" + chat_room + "']").trigger("click");
+            } else {
+                  addUserToChat(
+                        logged_in_user_id,
+                        friendId,
+                        friendUserName,
+                        friendEmail,
+                        friendImage
+                  );
+            }
+      });
+
+      $(".chat-block").addClass("open-chat-box");
+      $(".chat-open").hide();
+      $("#message_input").focus();
+}
+$("#logout_btn").on("click", function () {
+      setOfflineUserStatus(logged_in_user_id);
+});
+function setOnlineUserStatus(userId) {
+      //console.log(userId);
+      firebase.database()
+            .ref(rootNode + "/users/" + userId + "/")
+            .update({ isOnline: true });
+      // console.log('Online status true');
+      /* firebase.database().ref('/users/'+userId+'/isOnline/').once('value').then(function(querySnapshot) {
+      console.log(querySnapshot.val());
+ });*/
+}
+
+function setOfflineUserStatus(userId) {
+      firebase.database()
+            .ref(rootNode + "/users/" + userId + "/")
+            .update({ isOnline: false });
+      // console.log('Online status false');
+}
+
+function timeSince(date) {
+      var seconds = Math.floor((new Date() - date) / 1000);
+
+      var interval = seconds / 31536000;
+
+      if (interval > 1) {
+            return Math.floor(interval) + " year ago";
+      }
+      interval = seconds / 2592000;
+      if (interval > 1) {
+            return Math.floor(interval) + " month ago";
+      }
+      interval = seconds / 86400;
+      if (interval > 7) {
+            return Math.floor(interval / 7) + " week ago";
+      }
+
+      if (interval > 1) {
+            return Math.floor(interval) + " days ago";
+      }
+      interval = seconds / 3600;
+      if (interval > 1) {
+            return "Today";
+      }
+      interval = seconds / 60;
+      if (interval > 1) {
+            return Math.floor(interval) + " minutes ago";
+      }
+      return "Just now";
+}
+
+function getMoreMsg(receiverId, chat_room, startIndex, online_status) {
+      var delHtml = "";
+      var message_ref = firebase
+            .database()
+            .ref(rootNode + "/messages/" + chat_room + "/")
+            .orderByKey()
+            .endBefore(startIndex)
+            .limitToLast(msglimit);
+      // console.log(startIndex);
+      logged_in_user_id = receiverId;
+      console.log("looged in user id:");
+      console.log(logged_in_user_id);
+
+      message_ref.on("value", function (querySnapshot) {
+            chatHTML = "";
+            // console.log("Message ref getMoreMsg");
+            if (querySnapshot.numChildren() > 0) {
+                  lastMessageValue = "";
+                  querySnapshot.forEach(function (doc) {
+                        if (!lastMessageValue)
+                              lastMessageValue = doc.key;
+                        // console.log(lastMessageValue,doc.val().message);
+                        if (doc.key != "unReadMessageCount") {
+                              if (
+                                    doc.val().senderId ==
+                                    logged_in_user_id
+                              ) {
+                                    /* chatHTML +=   '<div class="outgoing_msg">'+
+                    '<div class="sent_msg">'+
+                        '<p class="displayemoji_comment">'+ doc.val().message+'</p>'+
+                      '<span class="time_date">'+convertTimestamptoTime(doc.val().timestamp)+'</span>'+
+                    '</div>'+
+                  '</div>';
+    }else{
+      chatHTML +=   '<div class="incoming_msg">'+
+                      '<div class="incoming_msg_img">'+
+                          '<img src="'+chat_avatar+'" alt="">'+
+                      '</div>'+
+                      '<div class="received_msg">'+
+                        '<div class="received_withd_msg">'+
+                            '<p class="displayemoji_comment">'+ doc.val().message+'</p>'+
+                          '<span class="time_date">'+convertTimestamptoTime(doc.val().timestamp)+'</span>'+
+                        '</div>'+
+                      '</div>'+
+                    '</div>';*/
+
+                                    chatHTML +=
+                                          '<li class="me">' +
+                                          '<div class="message">' +
+                                          '<span class="date-span 5">' +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</span>" +
+                                          doc.val().message +
+                                          "</div>" +
+                                          '<div class="chat-img">' +
+                                          '<div class="triangle"></div>' +
+                                          '<img src="' +
+                                          user_profile_image +
+                                          '" alt="" style="height:50px">' +
+                                          "</div>" +
+                                          '<div class="entete">' +
+                                          "<h3>" +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</h3>" +
+                                          "<h2>" +
+                                          user_name +
+                                          "</h2>" +
+                                          // '<span class="status green"></span>'+
+                                          "</div>" +
+                                          "</li>";
+                              } else {
+                                    chatHTML +=
+                                          '<li class="you">' +
+                                          '<div class="chat-img">' +
+                                          '<img class="chat_user_image"  src="' +
+                                          chat_avatar +
+                                          '" alt="" style="height:50px; max-width: 10%">' +
+                                          "</div>" +
+                                          '<div class="entete">' +
+                                          // '<span class="status '+online_status+'"></span>'+
+                                          "<h2>" +
+                                          name +
+                                          "</h2>" +
+                                          "<h3>" +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</h3>" +
+                                          "</div>" +
+                                          '<div class="triangle"></div>' +
+                                          '<div class="message">' +
+                                          '<span class="date-span 6">' +
+                                          timeConverter(
+                                                doc.val()
+                                                      .timestamp
+                                          ) +
+                                          "</span>" +
+                                          doc.val().message +
+                                          "</div>" +
+                                          "</li>";
+                              }
+                        }
+                  });
+            }
+            if (chatHTML != "")
+                  $(
+                        ".msg_history[data-chat-room='" +
+                        chat_room +
+                        "']"
+                  ).prepend(chatHTML);
+      });
+}
+
+$(document).on("click", ".mobileChat", function () {
+      $(".chatListLi").addClass("intro");
+      $("aside").show(1000);
+});
+
+/*$(document).on('click', '.intro', function () {
+  $(".chatListLi").removeClass("intro");
+  //$("aside").toggle(1000);
+});*/
+
+$(document).on("click", ".close-chat", function () {
+      $(".chatListLi").removeClass("intro");
+      $("#aside").show();
+});
+
+$(document).on("click", ".search-text", function () {
+      $("#search").toggle();
+});
+
+$(".msg_history").on("scroll", function () {
+      var scrollTop = $(this).scrollTop();
+      if (scrollTop <= 0) {
+            // console.log(logged_in_user_id,chat_room,lastMessageValue,online_status);
+            getMoreMsg(
+                  logged_in_user_id,
+                  chat_room,
+                  lastMessageValue,
+                  online_status
+            );
+      }
+});
+
+$(document).on("click", ".cmn-user", function () {
+      var rtnvalue = detectMob();
+      if (rtnvalue) {
+            $("aside").hide(1000);
+      }
+      //alert(rtnvalue);
+});
+
+function detectMob() {
+      const toMatch = [
+            /Android/i,
+            /webOS/i,
+            /iPhone/i,
+            /iPad/i,
+            /iPod/i,
+            /BlackBerry/i,
+            /Windows Phone/i,
+      ];
+
+      return toMatch.some((toMatchItem) => {
+            return navigator.userAgent.match(toMatchItem);
+      });
+}

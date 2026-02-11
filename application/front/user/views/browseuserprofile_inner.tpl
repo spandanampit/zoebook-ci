@@ -1,0 +1,1 @@
+<%include file="../../home/views/common/user_follower_modal.tpl" followarr=$browseprofile%>

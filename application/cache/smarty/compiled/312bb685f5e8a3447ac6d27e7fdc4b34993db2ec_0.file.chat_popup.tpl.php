@@ -1,0 +1,901 @@
+<?php
+/* Smarty version 3.1.28, created on 2024-01-31 13:00:15
+  from "/var/www/bit73.mydevfactory.com/abhisek/zoebook/application/front/home/views/common/chat_popup.tpl" */
+
+if ($_smarty_tpl->smarty->ext->_validateCompiled->decodeProperties($_smarty_tpl, array (
+  'has_nocache_code' => false,
+  'version' => '3.1.28',
+  'unifunc' => 'content_65b9f707b2b9d6_38624052',
+  'file_dependency' => 
+  array (
+    '312bb685f5e8a3447ac6d27e7fdc4b34993db2ec' => 
+    array (
+      0 => '/var/www/bit73.mydevfactory.com/abhisek/zoebook/application/front/home/views/common/chat_popup.tpl',
+      1 => 1706091453,
+      2 => 'file',
+    ),
+  ),
+  'includes' => 
+  array (
+  ),
+),false)) {
+function content_65b9f707b2b9d6_38624052 ($_smarty_tpl) {
+?>
+<style>
+.chatemoji .emoji-picker-icon {right:36px !important; padding-top:4px; color:#98c4f9}
+.chatemoji .emoji-menu {top:-228px}
+.ui-widget {z-index:6002 !important;}
+
+*{
+    box-sizing:border-box;
+}
+#aside,
+.main-chat.welcmchat{ border-radius:36px 36px 0 0;}
+#aside .top-aside,
+.main-chat.welcmchat header{border-radius:30px 30px 0 0; position: relative;}
+.header-img{position: relative; width: 100px; height: 100px;}
+.header-img .status{left: 75px;
+    bottom: 10px;
+    position: absolute;
+    z-index: 2;
+}
+#aside header{position: relative;}
+.chat-block .message-user h5{margin: 8px 0;}
+#chat li .chat-img img{margin: 8px 0 0 0;}
+.message-type .emoji-wysiwyg-editor{border: 1px solid #a2a7ad; border-radius: 25px;padding-right:50px;}
+#aside .cmn-user-img{ position: relative;  overflow: inherit;}
+#aside .cmn-user-img .friend_status{left:35px; top:35px;}
+#aside .cmn-user-img img{border-radius: 50%;}
+#container-chat{
+    width: 100%;
+    height: auto;
+    background: #fff;
+    margin: 0 auto;
+    font-size: 0;
+    /*overflow: hidden;*/
+    position: absolute;
+    bottom: 0;
+    /*box-shadow: -6px 0px 5px #B2B2B2; */  
+    border-top-left-radius: 37px;
+    border-top-right-radius: 33px;
+    background: transparent;
+}
+.chat-block {
+    bottom: 0 !important;
+        height: auto !important;
+        background: transparent;
+    padding: 0;
+    width: 45%;
+    }
+aside{
+    width: 50%;
+    height: 560px;
+    background-color: #f4f4f4;
+    display: inline-block;
+    font-size: 15px;
+    vertical-align: top;
+    float: right;
+    box-shadow: -2px -4px 6px #B2B2B2;
+    margin-top: 4px;
+    border-top-left-radius: 25px;
+}
+.top-aside{
+    /*background-image: linear-gradient(#0835a6, #4f81bc);*/
+    background: #4f81bd;
+    padding:15px 20px;
+    color:#fff;
+    font-weight:bold;
+    height: 138px;
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    position: relative;
+    }
+.top-aside h3{
+font-size: 18px;
+}
+.main-chat {
+    width: 50%;
+    height: 560PX;
+    display: inline-block;
+    font-size: 15px;
+    vertical-align: top;
+    border-top-right-radius: 28px;
+    -moz-box-shadow: -35px -20px 5px #B2B2B2;
+    -webkit-box-shadow: -35px -20px 5px #b2b2b2;
+    box-shadow: 0px -4px 6px #b2b2b2;
+    margin-top: 4px;
+    background: #fff;
+    border: none;
+    position: relative;
+}
+
+.message-type {
+    margin-left: -20px;
+    margin-right: -20px;
+    position: absolute !important;
+    width: 117% !important;
+    bottom: 0 !important;
+    padding: 15px 20px 0 20px;
+    margin-bottom: 5px;
+    border-top:none;
+    padding: 5px;
+}
+aside header{
+        padding: 10px;
+        padding-bottom: 0;
+}
+aside input{
+    width: 100%;
+    height: 39px;
+    line-height: 50px;
+    padding: 0 50px 0 20px;
+    background-color: #e1e1e1;
+    border: none;
+    border-radius: 3px;
+    color: #5f5f5f;
+    background-image: url(https://cdn2.iconfinder.com/data/icons/ios-7-icons/50/search-512.png);
+    background-repeat: no-repeat;
+    background-position: 95%;
+    background-size: 20px;
+}
+aside input::placeholder{
+    color:#7e7e7e;
+}
+aside ul{
+    padding-left: 0;
+    margin: 0;
+    list-style-type: none;
+    overflow-y: scroll;
+    height: 410px!important;
+}
+aside li{
+    padding: 5px 0px 5px 10px;
+    background-color: #fff;
+    margin: 5px 0;
+    position: relative;
+}
+aside li:hover{
+    background-color:#5e616a;
+}
+aside li:hover h2{
+    color:#fff;
+}
+h2,h3{
+    margin:0;
+}
+aside li img{
+    border-radius:50%;
+    /*margin-left:20px;*/
+    margin-right:8px;
+}
+aside li div{
+    display:inline-block;
+    vertical-align:top;
+    margin-top:12px;
+}
+aside li h2{
+    font-size:14px;
+    color:#000;
+    font-weight:normal;
+    margin-bottom:5px;
+}
+aside li h3{
+    font-size:12px;
+    color:#7e818a;
+    font-weight:normal;
+}
+
+.status {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 7px;
+    position: relative;
+    bottom: 20px;
+    left: 35px;
+}
+
+.friend_status {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 7px;
+    position: absolute;
+    left: 50px;
+    top: 60px;
+}
+.green{
+    background-color:#58b666;
+    display: inline-block;
+}
+.orange{
+    background-color:#ff725d;
+
+}
+.blue{
+    background-color:#6fbced;
+    margin-right:0;
+    /*margin-left:7px;*/
+}
+.status.blue,.friend_status.blue{display: none !important;}
+.btn-primary, .btn-primary:focus {
+    background-color: #0835a6;
+    border-color: #0835a6;
+    font-weight: 500;
+}
+
+.main-chat header{
+   /* background-image: linear-gradient(#4f81bc,#0835a6);*/
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    background-color: #4f81bd;
+    padding: 15px 20px;
+    color: #fff;
+    font-weight: bold;
+    height: 34px;
+    display: flex;
+    align-items: center;
+}
+.main-chat header > *{
+    display:inline-block;
+    vertical-align:top;
+}
+.main-chat header img:first-child{
+    border-radius:50%;
+        height: 40px;
+        min-width: 45px;
+}
+.main-chat header img:last-child{
+    width:24px;
+    margin-top:8px;
+}
+.main-chat header div{
+    margin-left:10px;
+    margin-right:145px;
+}
+.main-chat header h2{
+    font-size:16px;
+    margin-bottom:5px;
+    color: #fff;
+}
+.main-chat header h3{
+    font-size:14px;
+    font-weight:normal;
+    color:#7e818a;
+}
+
+#chat{
+    padding-left: 0;
+    margin: 0;
+    list-style-type: none;
+    overflow-y: scroll;
+    height: 275px;
+    border-top: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+}
+#chat li{
+    padding:10px 15px;
+}
+#chat h2,#chat h3{
+    display:inline-block;
+    font-size:13px;
+    font-weight:normal;
+}
+#chat h2{
+    margin: 0 5px;
+}
+
+#chat h3{
+    color:#bbb;
+}
+#chat .entete{
+    margin-bottom:5px;
+    display: none;
+}
+#chat .message{
+    padding:5px 15px;
+    color:#000;
+    line-height:25px;
+    max-width:80%;
+    display:inline-block;
+    text-align:left;
+    border-radius:5px;
+}
+#chat .me{
+    text-align:right;
+}
+#chat .you .message{
+    border: 2px solid #ccc;
+    color: #000000;
+    background: #fff;
+}
+#chat .me .message{
+    /*background-image: linear-gradient(#0835a6, #4f81bc);*/
+    border: 2px solid #4F81BD;
+    color: #000000;
+    background: #fff;
+}
+#chat .triangle{
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+#chat .you .triangle{
+        border-color: transparent #eef6f8 transparent transparent;
+        margin-left:0;
+        border-width: 6px 12px 6px 0;
+        visibility: hidden;
+}
+#chat .me .triangle{
+        border-color: transparent transparent transparent #4f81bd;
+        margin-left:0;
+        border-width: 6px 0 6px 12px;
+        visibility: hidden;
+        /*margin-left:318px;*/
+}
+.cmn-user-name {
+    max-width: 66%;
+}
+.main-chat footer{
+        height: 60px;
+    box-shadow: -6px 1px 8px #b7b7b7;
+    border-top: 2px solid #d6d6d6;
+    position: relative;
+}
+.main-chat footer textarea{
+    resize: none;
+    border: none;
+    display: block;
+    width: 100%;
+    height: 58px;
+    border-radius: 3px;
+    padding: 8px;
+    font-size: 13px;
+    margin-bottom: 0;
+}
+.main-chat footer textarea::placeholder{
+    color:#ddd;
+}
+.main-chat footer img{
+    height:30px;
+    cursor:pointer;
+}
+.main-chat footer a{
+    text-decoration:none;
+    text-transform:uppercase;
+    font-weight:bold;
+    color:#6fbced;
+    vertical-align:top;
+    margin-left:333px;
+    margin-top:5px;
+    display:inline-block;
+    display: inline-block;
+    position: absolute;
+    right: 15px;
+    top: 18px;
+}
+#chat li img{
+    border-radius:50%;
+    }
+.chat-img{
+    padding-bottom:0 !important;
+    }
+.chat_user_image {
+    min-width: 50px;
+}
+
+.badge-system {
+    color: #fff;
+    background-color: #4f81bd;
+    margin-left: 5px;
+}
+
+.last-message.displayemoji_comment {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.friends-list img{
+    border-radius:50%;
+    width: 45px;
+    margin-left: 5px;
+    min-height: 45px;
+    display: row;
+    }
+.friends-list{
+    height: 60px;
+    width: 100%;
+    overflow: auto;
+    display: flex;
+    flex-direction: inherit;
+    padding: 8px 0;
+    margin-top: 25px;
+    margin-left: 35px;
+    }
+/* width */
+.friends-list::-webkit-scrollbar {
+  height: 5px;
+  margin-top:10px;
+}
+
+/* Track */
+.friends-list::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+ 
+/* Handle */
+.friends-list::-webkit-scrollbar-thumb {
+  background: #888; 
+}
+
+/* Handle on hover */
+.friends-list::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+.message-type .msg_send_btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    color: #4f81bd;
+    cursor: pointer;
+    font-size: 17px;
+    height: 33px;
+    position: absolute;
+    right: 20px;
+    top: 5px;
+    width: 33px;
+}
+.chatemoji .emoji-picker-icon {
+    right: 50px !important;
+    padding-top: 4px;
+    color: #98c4f9;
+}
+.cancelRequest-btn{
+    width: 135px;
+    font-size: 14px;
+}
+.chatListLi:hover{
+    background-color: #ccc;
+
+}
+.mobileChat{
+    display: none !important;
+}
+.chat-block .close-chat {
+    /*top: -42px;*/
+    top: 11px;
+    right: 15px;
+    background: transparent !important;
+    z-index: 999;
+}
+.mobile-close{
+    display: none;
+}
+.web-close{
+    display: block;
+}
+
+.deletechat {
+    position: absolute;
+    top: 0;
+    right: 10px;
+}
+#chat li div {
+    display: inline-table;
+}
+.date-span {
+    display: block;
+    color: black;
+    font-size: 10px;
+    text-align: right;
+}
+
+
+
+/*@media  screen and (max-width: 1440px) {
+    .chat-block .close-chat {
+    top: -7%;
+}
+}
+@media  screen and (max-width: 1366px) {
+.chat-block .close-chat {
+    top: -18%;
+}    
+}*/
+
+
+/*new*/
+.pic-cover{
+    width: 100%;
+    text-align: center;
+}
+.pic-cover img{
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 7px solid #9dcaff;
+    display: block;
+}
+.pic-cover h2{
+    text-align: center !important;
+    width: 100% !important;
+}
+.circle-search{
+    padding: 20px;
+    border-radius: 50%;
+    background-color: #ccc;
+    width: 44px;
+    height: 44px;
+    position: absolute;
+    top: 70px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.chat-block .message-user {
+    margin-right: inherit;
+    margin-left: inherit;
+    position: relative;
+    padding: 10px;
+    min-height: 46px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.message-type{margin-left:0; width:100% !important; padding: 15px 5px 0 5px;}
+
+@media all and (device-width: 1024px) and (device-height: 768px) and (orientation:landscape) {
+  .chat-block{ width: 57%; }
+}
+@media all and (device-width: 768px) and (device-height: 1024px) and (orientation:portrait) {
+  .chat-block{ width: 75%; }
+}
+@media (max-width: 767px){
+.chat-block {
+    right: -500px;
+}
+
+.main-chat {
+    width: 100%;
+    height: 550px;
+}
+aside {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+}
+.mobileChat{
+    display: block !important;
+    position: absolute;
+    top: 5px;
+    right: 10px;
+}
+.chat-block .close-chat {
+    top: -67px;
+}
+.main-chat header div {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    display: flex;
+}
+.main-chat header h2 {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #fff;
+    margin-left: 10px;
+    width: 80%;
+    float: left;
+    word-break: break-all;
+    font-weight: normal;
+}
+.top-aside {
+    height: 130px;
+    margin-top: 60px;
+}
+aside input {
+    background-position: right;
+}
+#chat .me .triangle {
+    border-color: transparent transparent transparent #4f81bd;
+    margin-left: 0px;
+}
+.message{
+    width: 78%;
+}
+.mobile-close{
+    display: block;
+    background: #4f81bd !important;
+}
+.web-close{
+    display: none;
+}
+.chat-block {
+    width: 90% !important;
+}
+.chat-block .fa-user-friends{ top: 30px;  display: none;}
+.chat-block .close-chat{top:-36px;}/*55* change/
+/*.chat-block{right: -100%;}*/
+
+}
+
+@media (max-width: 414px){
+.chat-block .close-chat {top: 60px;}
+}
+@media (max-width: 375px){
+.chat-block .close-chat {top:-12px;}
+}
+@media (max-width: 320px){
+.chat-block .close-chat {top:-107px;}
+}
+
+</style>
+<?php echo $_smarty_tpl->tpl_vars['this']->value->js->add_js("front/chat.js");?>
+
+<div class="chat-block">
+     <div class="chat-open">
+        <i class="far fa-comment-dots"></i>
+    </div>
+    <i class="far fa-times-circle close-chat mobile-close"></i>
+    <i class="fas fa-user-friends user-friends"></i>
+    <div id="container-chat">
+        <i class="far fa-times-circle close-chat web-close"></i>
+        <input type="hidden" name="firebase_token" id="firebase_token" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('firebase_token');?>
+">
+        <input type="hidden" name="user_id" id="user_id" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('iUserId');?>
+">
+        <input type="hidden" name="username" id="username" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('vName');?>
+">
+        <input type="hidden" name="email" id="email" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('vEmail');?>
+">
+        <input type="hidden" name="profile_image" id="profile_image" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('vProfileImage');?>
+">
+        <main class="main-chat welcmchat">
+            <header class="">
+               <!--  <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_01.jpg" alt="">
+                <div>
+                    <h2 style="width: 140%">Welcome to Zoebook Chat.</h2>
+                </div>
+                <button class="mobileChat"><i class="fa fa-user" aria-hidden="true"></i></button> -->
+            </header>
+            <div class="pic-cover message-user">
+                
+                <!-- <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_01.jpg" alt=""> -->
+                
+                <div>
+                    <h2 style="width: 140%">Welcome to Zoebook Chat.</h2>
+                </div>
+                <button class="mobileChat"><i class="fa fa-user" aria-hidden="true"></i></button>
+                <!-- <button class="">Unfollow</button> -->
+            </div>
+            <ul id="chat" class="msg_history">
+                <h3><h3>
+                <h4>Lets Connect to the World.</h4>
+            
+                <!--  <li class="you">
+                <div class="chat-img">
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_01.jpg" alt="">
+                    
+                </div>
+                    <div class="entete">
+                        <span class="status green"></span>
+                        <h2>Vincent</h2>
+                        <h3>10:12AM, Today</h3>
+                    </div>
+                    <div class="triangle"></div>
+                    <div class="message">
+                        Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.
+                    </div>
+                </li> -->
+                
+            </ul>
+        
+               <div class="message-type hide">
+                <div class="input_msg_write">
+                 <div class="lead emoji-picker-container chatemoji">
+                    <!-- <textarea data-emojiable="true" class="form-control message-input" id="message_input" placeholder="Type your message"></textarea>
+                    <a href="#" class="msg_send_btn">Send</a> -->
+                     <input type="text" data-emojiable="true" class="form-control message-input" id="message_input" placeholder="Type a message" autofocus/>
+                    <button class="msg_send_btn" type="button"><i class="fa fa-paper-plane"></i></button>
+                 </div>
+                </div>
+              </div> 
+            
+        </main>       
+        <aside id="aside">
+            <div class="top-aside">
+                <h3>Chat with your friends</h3>
+                <div class="circle-search"><a href="javascript:void(0);" class="search-text" style="text-decoration: none;"><i class="fa fa-search" aria-hidden="true"></i></a>
+</div>
+                <div class="friends-list">
+                       <!--  <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_04.jpg" alt=""> -->
+                </div>
+            </div>
+            <header>
+                <input type="text" placeholder="Search" id="search" style="display: none;">
+            </header>
+            <ul class="inbox_chat_list">
+                <!-- <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_01.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status orange"></span>
+                            offline
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_02.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status green"></span>
+                            online
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_03.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status orange"></span>
+                            offline
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_04.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status green"></span>
+                            online
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_05.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status orange"></span>
+                            offline
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_06.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status green"></span>
+                            online
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_07.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status green"></span>
+                            online
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_08.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status green"></span>
+                            online
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_09.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status green"></span>
+                            online
+                        </h3>
+                    </div>
+                </li>
+                <li>
+                    <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/chat_avatar_10.jpg" alt="">
+                    <div>
+                        <h2>Prénom Nom</h2>
+                        <h3>
+                            <span class="status orange"></span>
+                            offline
+                        </h3>
+                    </div>
+                </li> -->
+            </ul>
+        </aside>
+    </div>    
+
+   <!--  <div class="chat-open">
+        <i class="far fa-comment-dots"></i>
+    </div>
+    <i class="far fa-times-circle close-chat"></i>
+    <i class="fas fa-user-friends user-friends"></i>
+    <div class="row">
+        <div class="col-lg-4 col-md-4 pr-0 online-friend-list">
+            <div class="left-block online-people-block">
+                <div class="inbox_people">
+                    <div class="headind_srch">
+                        <input type="hidden" name="firebase_token" id="firebase_token" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('firebase_token');?>
+">
+                        <input type="hidden" name="user_id" id="user_id" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('iUserId');?>
+">
+                        <input type="hidden" name="username" id="username" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('vName');?>
+">
+                        <input type="hidden" name="email" id="email" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('vEmail');?>
+">
+                        <input type="hidden" name="profile_image" id="profile_image" value="<?php echo $_smarty_tpl->tpl_vars['this']->value->session->userdata('vProfileImage');?>
+">
+                        <div>Friends List</div>
+                        <div class="search-friend">
+                            <div class="ui-widget">
+                                <span class="fa fa-search"></span>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" id="search" placeholder="Search">
+                    </div>
+                    <div class="inbox_chat_list">
+                        <ul>
+                            <span>Connecting.....! </span><br>
+                            <span>Please wait while we fetch your chats..!</span>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 col-md-8 pl-0 online-chat-box">
+            <div class="right-block">
+                <div class="message-user">
+                </div>
+                <div class="messaging">
+                    <div class="inbox_msg">
+                        <div class="mesgs">
+                            <div class="msg_history">
+                            <h3>Welcome to Zoebook Chat.</h3>
+                            <h4>Lets Connect to the World.</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="message-type hide">
+                    <div class="input_msg_write"> -->
+                        <!--<input type="text" class="form-control message-input" id="message_input" placeholder="Type a message" autofocus/> -->
+
+                       <!--  <p class="lead emoji-picker-container chatemoji">
+                            <input type="text" data-emojiable="true" class="form-control message-input" id="message_input" placeholder="Type a message" autofocus/>
+                        </p>
+                        <button class="msg_send_btn" type="button"><i class="fas fa-paper-plane"></i></button> -->
+                        <!--<div data-emojiarea data-type="unicode" data-global-picker="false" class="w-100">
+                            <div class="emoji-button emoji-button-chat"><i class="fa fa-smile-o" style="font-size:20px;color:#98c4f9"></i></div>
+                            <input type="text" class="form-control message-input emojipadding-chat" id="message_input" placeholder="Type a message" autofocus/>
+                            <button class="msg_send_btn" type="button"><i class="fas fa-paper-plane"></i></button>
+                        </div>-->
+         <!--                
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+</div>
+<?php }
+}

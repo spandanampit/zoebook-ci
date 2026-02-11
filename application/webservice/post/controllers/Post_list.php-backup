@@ -1,0 +1,2000 @@
+<?php  
+            
+defined('BASEPATH') || exit('No direct script access allowed');
+
+/**
+ * Description of Post List Controller
+ * 
+ * @category webservice
+ *            
+ * @package post
+ * 
+ * @subpackage controllers 
+ * 
+ * @module Post List
+ * 
+ * @class Post_list.php
+ * 
+ * @path application\webservice\post\controllers\Post_list.php
+ * 
+ * @version 4.3
+ *
+ * @author CIT Dev Team
+ * 
+ * @since 13.10.2022
+ */ 
+ 
+class Post_list extends Cit_Controller
+{
+    public $settings_params;
+    public $output_params;
+    public $single_keys;
+    public $multiple_keys;
+    public $block_result;
+      
+    /**
+     * __construct method is used to set controller preferences while controller object initialization.
+     */
+    public function __construct() {
+        parent::__construct();
+        $this->settings_params = array();
+        $this->output_params = array();
+        $this->single_keys = array("prepare_my_post_id_list","prepare_user_post_id_list","update_myfeedupdatedate_users");
+        $this->multiple_keys = array("get_my_posts","get_my_post_comment_stats","get_my_post_like_stats","get_my_post_share_stats","assign_my_post_statistics","fetch_post_id","get_my_post_media","get_user_posts","get_user_post_comment_stats","get_user_post_like_stats","get_user_post_share_stats","assign_user_post_statistics","custom_fetch_user_post_id","get_user_post_media","custom_add_ads_user_post");
+        $this->block_result = array();
+
+        $this->load->library('wsresponse');
+        $this->load->model('post_list_model');
+        $this->load->model("post/post_model");
+    $this->load->model("wscustom/wscustom_model");
+    $this->load->model("post/post_media_model");
+    $this->load->model("user/users_model");
+    }
+      
+    /**
+     * rules_post_list method is used to validate api input params.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 13.10.2022
+     * @param array $request_arr request_arr array is used for api input.
+     * @return array $valid_res returns output response of API.
+     */
+    public function rules_post_list($request_arr = array()){
+        $valid_arr = array(
+                "is_feed" => array(
+                    array(
+                        "rule" => "required",
+                        "value" => TRUE,
+                        "message" => "is_feed_required"
+                    )
+                ),
+                "profile_user_id" => array(
+                    array(
+                        "rule" => "required",
+                        "value" => TRUE,
+                        "message" => "profile_user_id_required"
+                    )
+                ),
+                "user_id" => array(
+                    array(
+                        "rule" => "required",
+                        "value" => TRUE,
+                        "message" => "user_id_required"
+                    )
+                )
+            );
+        $valid_res = $this->wsresponse->validateInputParams($valid_arr, $request_arr, "post_list");
+        
+        return $valid_res;
+    }
+    
+    /**
+     * start_post_list method is used to initiate api execution flow.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 13.10.2022
+     * @param array $request_arr request_arr array is used for api input.
+     * @param bool $inner_api inner_api flag is used to idetify whether it is inner api request or general request.
+     * @return array $output_response returns output response of API.
+     */
+    public function start_post_list($request_arr  = array(), $inner_api = FALSE) {
+        try {
+            $validation_res = $this->rules_post_list($request_arr);
+            if ($validation_res["success"] == "-5") {
+                if($inner_api === TRUE){
+                    return $validation_res;
+                } else {
+                    $this->wsresponse->sendValidationResponse($validation_res);
+                }
+            }
+            $output_response = array();
+            $input_params = $validation_res['input_params'];
+            
+        
+        $condition_res = $this->cond_check_user_id($input_params);
+        
+        if($condition_res["success"]) {
+        
+    
+        $input_params = $this->get_my_posts($input_params);
+        
+    
+        $condition_res = $this->is_having_my_posts($input_params);
+        
+        if($condition_res["success"]) {
+        
+    
+        $input_params = $this->prepare_my_post_id_list($input_params);
+        
+    
+        $input_params = $this->get_my_post_comment_stats($input_params);
+        
+    
+        $input_params = $this->get_my_post_like_stats($input_params);
+        
+    
+        $input_params = $this->get_my_post_share_stats($input_params);
+        
+    
+        $input_params = $this->assign_my_post_statistics($input_params);
+        
+    
+        }
+    
+        $input_params = $this->fetch_post_id($input_params);
+        
+    
+        $input_params = $this->get_my_post_media($input_params);
+        
+    
+        $input_params = $this->start_loop($input_params);
+        
+    
+        $input_params = $this->custom_function($input_params);
+        
+    
+        $input_params = $this->update_myfeedupdatedate($input_params);
+        
+    
+        $input_params = $this->custom_function_1($input_params);
+        
+    
+        $condition_res = $this->condition_check($input_params);
+        
+        if($condition_res["success"]) {
+        
+    
+        $output_response = $this->post_finish_success_2($input_params);
+        return $output_response;
+        
+    
+        }
+    
+        else {
+        
+    
+        $output_response = $this->post_finish_success_3($input_params);
+        return $output_response;
+        
+    
+        }
+        
+    
+        }
+    
+        else {
+        
+    
+        $input_params = $this->get_user_posts($input_params);
+        
+    
+        $condition_res = $this->is_having_user_posts($input_params);
+        
+        if($condition_res["success"]) {
+        
+    
+        $input_params = $this->prepare_user_post_id_list($input_params);
+        
+    
+        $input_params = $this->get_user_post_comment_stats($input_params);
+        
+    
+        $input_params = $this->get_user_post_like_stats($input_params);
+        
+    
+        $input_params = $this->get_user_post_share_stats($input_params);
+        
+    
+        $input_params = $this->assign_user_post_statistics($input_params);
+        
+    
+        }
+    
+        $input_params = $this->custom_fetch_user_post_id($input_params);
+        
+    
+        $input_params = $this->get_user_post_media($input_params);
+        
+    
+        $input_params = $this->start_loop_1($input_params);
+        
+    
+        $input_params = $this->update_myfeedupdatedate_users($input_params);
+        
+    
+        $input_params = $this->custom_add_ads_user_post($input_params);
+        
+    
+        $condition_res = $this->condition_for_user_posts($input_params);
+        
+        if($condition_res["success"]) {
+        
+    
+        $output_response = $this->post_finish_success($input_params);
+        return $output_response;
+        
+    
+        }
+    
+        else {
+        
+    
+        $output_response = $this->post_finish_success_1($input_params);
+        return $output_response;
+        
+    
+        }
+        
+    
+        }
+        
+        
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+        }
+        return $output_response;
+    }
+    
+
+    /**
+     * cond_check_user_id method is used to process conditions.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Vamsi Ippe | 19.09.2018
+     * @param array $input_params input_params array to process condition flow.
+     * @return array $block_result returns result of condition block as array.
+     */
+    public function cond_check_user_id($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $cc_lo_0 = $input_params["user_id"];
+            $cc_ro_0 = $input_params["profile_user_id"];
+            
+            $cc_fr_0 = ($cc_lo_0 == $cc_ro_0) ? TRUE : FALSE;    
+            
+            if(!$cc_fr_0){
+                throw new Exception("Some conditions does not match.");
+            }
+                $success = 1;
+                $message = "Conditions matched.";
+            } catch (Exception $e) {
+                $success = 0;
+                $message = $e->getMessage();
+            }
+            $this->block_result["success"] = $success;
+            $this->block_result["message"] = $message;
+            return $this->block_result;
+            
+    }
+                                
+    /**
+     * get_my_posts method is used to process query block.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_my_posts($input_params = array())
+    {
+            $this->block_result = array();
+            try {
+                
+            $params_arr = array();
+            if(isset($input_params["user_id"])){
+                $params_arr["user_id"] = $input_params["user_id"];
+            }
+            if(isset($input_params["is_feed"])){
+                $params_arr["is_feed"] = $input_params["is_feed"];
+            }
+            $page_index = isset($input_params["page_index"]) ? $input_params["page_index"] : 1;
+            $this->block_result = $this->post_model->get_my_posts($params_arr, $page_index, $this->settings_params);
+            // print_r( $this->block_result);
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    $media_type  = $this->post_media_model->get_post_media($input_params["user_id"], '', $data_arr["p_post_id"]);
+                    // print_r($media_type);
+                    if($media_type['data'][0]['pm_post_source_type'] == 'aws') {
+                        $data = $data_arr["p_added_date"];
+                        if (method_exists($this->general, "dateTimeSystemFormat")) {
+                            $data = $this->general->dateTimeSystemFormat($data, $result_arr[$data_key], $i, $input_params);
+                        }
+                        $result_arr[$data_key]["p_added_date"] = $data;
+                        
+                        $data = $data_arr["u_profile_image"];
+                        $image_arr = array();                        
+                        $image_arr["image_name"] = $data;
+                        $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                        $image_arr["def_img"] = "Yes";
+                        $image_arr["path"] = "compress_profile_image";
+                        $data = $this->general->get_image_aws($image_arr);
+                        
+                        $result_arr[$data_key]["u_profile_image"] = $data;
+                        
+                        $data = $data_arr["p_video_thumbnail"];
+                        $image_arr = array();                        
+                        $image_arr["image_name"] = $data;
+                        $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                        $image_arr["def_img"] = "Yes";
+                        $dest_path = "thumbnail";
+                        $image_arr["path"] = $this->general->getImageNestedFolders($dest_path);
+                        $data = $this->general->get_image($image_arr);
+                        
+                        $result_arr[$data_key]["p_video_thumbnail"] = $data;
+                        
+                        $data = $data_arr["post_detail_url"];
+                        if (method_exists($this, "post_detail_url")) {
+                            $data = $this->post_detail_url($data, $result_arr[$data_key], $i, $input_params);
+                        }
+                        $result_arr[$data_key]["post_detail_url"] = $data;
+                    } else {
+                        $data = $data_arr['pm_upload_file'];
+                        $result_arr[$data_key]["pm_upload_file"] = $media_type['data'][0]['pm_upload_file'];
+                        $data = $data_arr['pm_cloudinary_url'];
+                        $result_arr[$data_key]["display_image"] = $media_type['data'][0]['pm_cloudinary_url'];
+                    }
+                    
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+                // print_r($this->block_result["data"] );
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_my_posts"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+
+    /**
+     * is_having_my_posts method is used to process conditions.
+     * @created  | 06.09.2019
+     * @modified  | 06.09.2019
+     * @param array $input_params input_params array to process condition flow.
+     * @return array $block_result returns result of condition block as array.
+     */
+    public function is_having_my_posts($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $cc_lo_0 = (empty($input_params["get_my_posts"]) ? 0 : 1);
+            $cc_ro_0 = 1;
+            
+            $cc_fr_0 = ($cc_lo_0 == $cc_ro_0) ? TRUE : FALSE;    
+            
+            if(!$cc_fr_0){
+                throw new Exception("Some conditions does not match.");
+            }
+                $success = 1;
+                $message = "Conditions matched.";
+            } catch (Exception $e) {
+                $success = 0;
+                $message = $e->getMessage();
+            }
+            $this->block_result["success"] = $success;
+            $this->block_result["message"] = $message;
+            return $this->block_result;
+            
+    }
+                                
+    /**
+     * prepare_my_post_id_list method is used to process custom function.
+     * @created  | 06.09.2019
+     * @modified  | 09.09.2019
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function prepare_my_post_id_list($input_params = array())
+    {
+                    
+            if (!method_exists($this, "getMyPostIDList")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->getMyPostIDList($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["prepare_my_post_id_list"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * get_my_post_comment_stats method is used to process query block.
+     * @created  | 06.09.2019
+     * @modified Nandini Santoki | 23.09.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_my_post_comment_stats($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $post_stats_cond = isset($input_params["post_stats_cond"]) ? $input_params["post_stats_cond"] : "";
+            $this->block_result = $this->wscustom_model->get_my_post_comment_stats($post_stats_cond);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_my_post_comment_stats"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * get_my_post_like_stats method is used to process query block.
+     * @created  | 07.11.2019
+     * @modified Nandini Santoki | 03.11.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_my_post_like_stats($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $post_stats_cond = isset($input_params["post_stats_cond"]) ? $input_params["post_stats_cond"] : "";
+            $this->block_result = $this->wscustom_model->get_my_post_like_stats($post_stats_cond);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_my_post_like_stats"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * get_my_post_share_stats method is used to process query block.
+     * @created  | 07.11.2019
+     * @modified Nandini Santoki | 18.09.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_my_post_share_stats($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $post_stats_cond = isset($input_params["post_stats_cond"]) ? $input_params["post_stats_cond"] : "";
+            $this->block_result = $this->wscustom_model->get_my_post_share_stats($post_stats_cond);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_my_post_share_stats"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * assign_my_post_statistics method is used to process custom function.
+     * @created  | 06.09.2019
+     * @modified  | 06.09.2019
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function assign_my_post_statistics($input_params = array())
+    {
+                    
+            if (!method_exists($this, "assignMyPostStats")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->assignMyPostStats($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["assign_my_post_statistics"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * fetch_post_id method is used to process custom function.
+     * @created Jay Rajput | 22.08.2022
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function fetch_post_id($input_params = array())
+    {
+                    
+            if (!method_exists($this, "fetch_postIDs")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->fetch_postIDs($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["fetch_post_id"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * get_my_post_media method is used to process query block.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_my_post_media($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $user_id = isset($input_params["user_id"]) ? $input_params["user_id"] : "";
+            $post_id = isset($input_params["post_id"]) ? $input_params["post_id"] : "";
+            $this->block_result = $this->post_media_model->get_my_post_media($user_id, $post_id);
+            // print_r( $this->block_result );
+            
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    
+                    if($data_arr['pm_post_source_type'] == 'aws') {
+                        $data = $data_arr["pm_upload_file"];
+                        $image_arr = array();                        
+                        $image_arr["image_name"] = $data;
+                        $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                        $p_key = ($data_arr["pm_user_id"] != "") ? $data_arr["pm_user_id"] : $input_params["pm_user_id"]; 
+                        $image_arr["pk"] = $p_key;
+                        $image_arr["def_img"] = "Yes";
+                        $image_arr["path"] = "compress_post_video";
+                        $data = $this->general->get_image_aws($image_arr);
+                        
+                        $result_arr[$data_key]["pm_upload_file"] = $data;
+                        
+                        $data = $data_arr["pm_added_date"];
+                        if (method_exists($this->general, "getDateOnly")) {
+                            $data = $this->general->getDateOnly($data, $result_arr[$data_key], $i, $input_params);
+                        }
+                        $result_arr[$data_key]["pm_added_date"] = $data;
+                        
+                        $data = $data_arr["pm_video_thumbnail"];
+                        if (method_exists($this->general, "getimagefromvideo")) {
+                            $data = $this->general->getimagefromvideo($data, $result_arr[$data_key], $i, $input_params);
+                        }
+                        $image_arr = array();                        
+                        $image_arr["image_name"] = $data;
+                        $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                        $p_key = ($data_arr["pm_user_id"] != "") ? $data_arr["pm_user_id"] : $input_params["pm_user_id"]; 
+                        $image_arr["pk"] = $p_key;
+                        $image_arr["def_img"] = "Yes";
+                        $image_arr["path"] = "compress_post_video";
+                        $data = $this->general->get_image_aws($image_arr);
+                        
+                        $result_arr[$data_key]["pm_video_thumbnail"] = $data;
+                        
+                        $data = $data_arr["display_image"];
+                        if (method_exists($this, "get_display_image")) {
+                            $data = $this->get_display_image($data, $result_arr[$data_key], $i, $input_params);
+                        }
+                        $result_arr[$data_key]["display_image"] = $data;
+                        
+                        $data = $data_arr["pm_upload_file_org"];
+                        $image_arr = array();                        
+                        $image_arr["image_name"] = $data;
+                        $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                        $p_key = ($data_arr["pm_user_id"] != "") ? $data_arr["pm_user_id"] : $input_params["pm_user_id"]; 
+                        $image_arr["pk"] = $p_key;
+                        $image_arr["no_img"] = FALSE;
+                        $image_arr["path"] = "compress_post_video";
+                        $data = $this->general->get_image_aws($image_arr);
+                        
+                        $result_arr[$data_key]["pm_upload_file_org"] = $data;
+                        
+                        $data = $data_arr["pm_video_thumbnail_org"];
+                        $image_arr = array();                        
+                        $image_arr["image_name"] = $data;
+                        $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                        $p_key = ($data_arr["pm_user_id"] != "") ? $data_arr["pm_user_id"] : $input_params["pm_user_id"]; 
+                        $image_arr["pk"] = $p_key;
+                        $image_arr["no_img"] = FALSE;
+                        $image_arr["path"] = "compress_post_video";
+                        $data = $this->general->get_image_aws($image_arr);
+                        
+                        $result_arr[$data_key]["pm_video_thumbnail_org"] = $data;
+                    } else {
+                        $data = $data_arr['pm_upload_file'];
+                        $result_arr[$data_key]["pm_upload_file"] = $data;
+                        $data = $data_arr['pm_cloudinary_url'];
+                        $result_arr[$data_key]["display_image"] = $data;
+                        $result_arr[$data_key]["pm_video_thumbnail"] = $data;
+                    }
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_my_post_media"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                           
+    /**
+     * start_loop method is used to process loop flow.
+     * @created Jay Rajput | 08.09.2022
+     * @modified Jay Rajput | 08.09.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function start_loop($input_params = array())
+    {
+        $this->iterate_start_loop($input_params["get_my_posts"], $input_params);
+        return $input_params;
+    }
+    
+
+    /**
+     * check_post_type method is used to process conditions.
+     * @created Anjaneyulu Gulla | 25.10.2018
+     * @modified Anjaneyulu Gulla | 25.10.2018
+     * @param array $input_params input_params array to process condition flow.
+     * @return array $block_result returns result of condition block as array.
+     */
+    public function check_post_type($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $cc_lo_0 = $input_params["p_post_type"];
+            $cc_ro_0 = "Share";
+            
+            $cc_fr_0 = ($cc_lo_0 == $cc_ro_0) ? TRUE : FALSE;    
+            
+            if(!$cc_fr_0){
+                throw new Exception("Some conditions does not match.");
+            }
+                $success = 1;
+                $message = "Conditions matched.";
+            } catch (Exception $e) {
+                $success = 0;
+                $message = $e->getMessage();
+            }
+            $this->block_result["success"] = $success;
+            $this->block_result["message"] = $message;
+            return $this->block_result;
+            
+    }
+                                
+    /**
+     * get_actual_post method is used to process query block.
+     * @created Anjaneyulu Gulla | 25.10.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_actual_post($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $user_id = isset($input_params["user_id"]) ? $input_params["user_id"] : "";
+            $p_actual_post_id = isset($input_params["p_actual_post_id"]) ? $input_params["p_actual_post_id"] : "";
+            $this->block_result = $this->post_model->get_actual_post($user_id, $p_actual_post_id);
+            
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    
+                    $data = $data_arr["p_added_date_2"];
+                    if (method_exists($this->general, "dateTimeSystemFormat")) {
+                        $data = $this->general->dateTimeSystemFormat($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["p_added_date_2"] = $data;
+                    
+                    $data = $data_arr["u_profile_image_2"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_profile_image";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["u_profile_image_2"] = $data;
+                    
+                    $data = $data_arr["p_video_thumbnail_3"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $image_arr["def_img"] = "Yes";
+                    $dest_path = "thumbnail";
+                    $image_arr["path"] = $this->general->getImageNestedFolders($dest_path);
+                    $data = $this->general->get_image($image_arr);
+                    
+                    $result_arr[$data_key]["p_video_thumbnail_3"] = $data;
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_actual_post"] = $this->block_result["data"];
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $this->block_result["data"]);
+            
+        return $input_params;
+    }
+                                
+    /**
+     * get_actual_post_statistics method is used to process query block.
+     * @created  | 09.09.2019
+     * @modified Nandini Santoki | 03.11.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_actual_post_statistics($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $p_actual_post_id = isset($input_params["p_actual_post_id"]) ? $input_params["p_actual_post_id"] : "";
+            $this->block_result = $this->wscustom_model->get_actual_post_statistics($p_actual_post_id);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_actual_post_statistics"] = $this->block_result["data"];
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $this->block_result["data"]);
+            
+        return $input_params;
+    }
+                                
+    /**
+     * assign_actual_post_stats method is used to process custom function.
+     * @created  | 09.09.2019
+     * @modified Rohit Patidar | 11.06.2021
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function assign_actual_post_stats($input_params = array())
+    {
+                    
+            if (!method_exists($this, "assignActualPostStats")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->assignActualPostStats($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["assign_actual_post_stats"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * get_actual_post_media method is used to process query block.
+     * @created Anjaneyulu Gulla | 25.10.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_actual_post_media($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $user_id = isset($input_params["user_id"]) ? $input_params["user_id"] : "";
+            $p_actual_post_id = isset($input_params["p_actual_post_id"]) ? $input_params["p_actual_post_id"] : "";
+            $this->block_result = $this->post_media_model->get_actual_post_media($user_id, $p_actual_post_id);
+            
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    
+                    $data = $data_arr["pm_upload_file_2"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_2"] != "") ? $data_arr["pm_user_id_2"] : $input_params["pm_user_id_2"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_upload_file_2"] = $data;
+                    
+                    $data = $data_arr["pm_video_thumbnail_2"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_2"] != "") ? $data_arr["pm_user_id_2"] : $input_params["pm_user_id_2"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_video_thumbnail_2"] = $data;
+                    
+                    $data = $data_arr["display_image_2"];
+                    if (method_exists($this, "get_display_image")) {
+                        $data = $this->get_display_image($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["display_image_2"] = $data;
+                    
+                    $data = $data_arr["pm_upload_file_org_2"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_2"] != "") ? $data_arr["pm_user_id_2"] : $input_params["pm_user_id_2"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["no_img"] = FALSE;
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_upload_file_org_2"] = $data;
+                    
+                    $data = $data_arr["pm_video_thumbnail_org_2"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_2"] != "") ? $data_arr["pm_user_id_2"] : $input_params["pm_user_id_2"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_video_thumbnail_org_2"] = $data;
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_actual_post_media"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * custom_function method is used to process custom function.
+     * @created Alpesh Patel | 09.07.2021
+     * @modified Rohit Patidar | 13.10.2021
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function custom_function($input_params = array())
+    {
+                    
+            if (!method_exists($this, "getLiveVideoURL")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->getLiveVideoURL($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["custom_function"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * update_myfeedupdatedate method is used to process query block.
+     * @created Rohit Patidar | 19.05.2021
+     * @modified Rohit Patidar | 19.05.2021
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function update_myfeedupdatedate($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $params_arr = $where_arr = array();
+            if(isset($input_params["user_id"])){
+                $where_arr["user_id"] = $input_params["user_id"];
+            }
+            $params_arr["_dtmyfeedupdatedate"] = "";
+                if (method_exists($this, "getUserUpdateDate")) {
+                    $params_arr["_dtmyfeedupdatedate"] = $this->getUserUpdateDate($params_arr["_dtmyfeedupdatedate"], $input_params);
+                }
+            $this->block_result = $this->users_model->update_myfeedupdatedate($params_arr, $where_arr);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["update_myfeedupdatedate"] = $this->block_result["data"];
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $this->block_result["data"]);
+            
+        return $input_params;
+    }
+                                
+    /**
+     * custom_function_1 method is used to process custom function.
+     * @created Rohit Patidar | 13.10.2021
+     * @modified Jay Rajput | 22.07.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function custom_function_1($input_params = array())
+    {
+                    
+            if (!method_exists($this, "addAdsMyPost")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->addAdsMyPost($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["custom_function_1"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+
+    /**
+     * condition_check method is used to process conditions.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Vamsi Ippe | 19.09.2018
+     * @param array $input_params input_params array to process condition flow.
+     * @return array $block_result returns result of condition block as array.
+     */
+    public function condition_check($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $cc_lo_0 = (empty($input_params["get_my_posts"]) ? 0 : 1);
+            $cc_ro_0 = 1;
+            
+            $cc_fr_0 = ($cc_lo_0 == $cc_ro_0) ? TRUE : FALSE;    
+            
+            if(!$cc_fr_0){
+                throw new Exception("Some conditions does not match.");
+            }
+                $success = 1;
+                $message = "Conditions matched.";
+            } catch (Exception $e) {
+                $success = 0;
+                $message = $e->getMessage();
+            }
+            $this->block_result["success"] = $success;
+            $this->block_result["message"] = $message;
+            return $this->block_result;
+            
+    }
+
+    /**
+     * post_finish_success_2 method is used to process finish flow.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $responce_arr returns responce array of api.
+     */
+    public function post_finish_success_2($input_params = array())
+    {
+        
+            $setting_fields = array(
+                "success" => "1", 
+                "message" => "post_finish_success_2"
+            );
+            $output_fields = array('p_post_id','p_user_id','p_post_type','p_added_date','is_like','u_name','u_profile_image','p_status','p_actual_post_id','ts_tokbox_session_id','expire_date','p_visibility','p_impression_count','is_impressed','comment_count','likes_count','shared_count','p_post_meta_data_1','p_video_thumbnail','p_post_text_emoji','post_detail_url','p_post_text','ts_archive_id','ts_archive_status','live_video_url','pm_post_id','pm_post_media_id','pm_media_type','pm_user_id','pm_upload_file','pm_added_date','pm_video_thumbnail','display_image','pm_views_count_1','is_viewed_1','pm_upload_file_org','pm_video_thumbnail_org','media_like_count_2','media_comment_count_1','is_media_like_1','pm_mheight_1','pm_mwidth_1','p_post_id_2','p_user_id_2','p_post_type_2','p_post_text_2','p_added_date_2','is_like_2','u_name_2','u_profile_image_2','p_status_2','expire_date_2','p_impression_count_2','is_impressed_2','comment_count_2','likes_count_2','shared_count_2','p_post_meta_data_3','p_video_thumbnail_3','pm_post_id_2','pm_post_media_id_2','pm_media_type_2','pm_user_id_2','pm_upload_file_2','pm_added_date_2','pm_video_thumbnail_2','display_image_2','pm_views_count','is_viewed_2','pm_upload_file_org_2','pm_video_thumbnail_org_2','media_like_count','media_comment_count_2','is_media_like_2','media_height','media_width');
+            $output_keys = array('get_my_posts','get_my_post_media','get_actual_post','get_actual_post_media');
+            $ouput_aliases = array("get_my_posts" => "get_posts","p_post_id" => "post_id","p_user_id" => "posted_user_id","p_post_type" => "post_type","p_added_date" => "added_date","u_name" => "user_name","u_profile_image" => "user_profile_image","p_status" => "status","p_actual_post_id" => "actual_post_id","ts_tokbox_session_id" => "tokbox_session_id","p_visibility" => "visibility","p_impression_count" => "impression_count","p_post_meta_data_1" => "p_post_meta_data","p_video_thumbnail" => "live_video_thumbnail","p_post_text_emoji" => "post_text","p_post_text" => "post_text_emoji","get_my_post_media" => "get_post_media","pm_post_id" => "post_id","pm_views_count_1" => "pm_views_count","is_viewed_1" => "is_viewed","pm_upload_file_org" => "upload_file_org","pm_video_thumbnail_org" => "video_thumbnail_org","media_like_count_2" => "media_like_count","media_comment_count_1" => "media_comment_count","is_media_like_1" => "is_media_like","pm_mheight_1" => "media_height","pm_mwidth_1" => "media_width","p_post_id_2" => "p_post_id","p_user_id_2" => "p_user_id","p_post_type_2" => "p_post_type","p_post_text_2" => "p_post_text","p_added_date_2" => "p_added_date","is_like_2" => "is_like","u_name_2" => "user_name","u_profile_image_2" => "user_profile_image","p_status_2" => "p_status","expire_date_2" => "expire_date","p_impression_count_2" => "impression_count","is_impressed_2" => "is_impressed","comment_count_2" => "comment_count","likes_count_2" => "p_likes_count","shared_count_2" => "shared_count","p_post_meta_data_3" => "p_post_meta_data","p_video_thumbnail_3" => "live_video_thumbnail","pm_post_id_2" => "pm_post_id","pm_post_media_id_2" => "pm_post_media_id","pm_media_type_2" => "pm_media_type","pm_user_id_2" => "pm_user_id","pm_upload_file_2" => "pm_upload_file","pm_added_date_2" => "pm_added_date","pm_video_thumbnail_2" => "pm_video_thumbnail","display_image_2" => "display_image","is_viewed_2" => "is_viewed","pm_upload_file_org_2" => "upload_file_org","pm_video_thumbnail_org_2" => "video_thumbnail_org","media_comment_count_2" => "media_comment_count","is_media_like_2" => "is_media_like");
+            $output_objects = array("get_actual_post");
+            
+            $output_array["settings"] = array_merge($this->settings_params, $setting_fields);
+            $output_array["settings"]["fields"] = $output_fields;
+            $output_array["data"] = $input_params;
+                        
+            $func_array["function"]["name"] = "post_list";
+            $func_array["function"]["output_keys"] = $output_keys;
+            $func_array["function"]["output_alias"] = $ouput_aliases;
+            $func_array["function"]["output_objects"] = $output_objects;
+            $func_array["function"]["single_keys"] = $this->single_keys;
+            $func_array["function"]["multiple_keys"] = $this->multiple_keys;
+            
+            $this->wsresponse->setResponseStatus(200);
+            
+            $responce_arr = $this->wsresponse->outputResponse($output_array, $func_array);
+            
+        return $responce_arr;
+    }
+
+    /**
+     * post_finish_success_3 method is used to process finish flow.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 22.07.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $responce_arr returns responce array of api.
+     */
+    public function post_finish_success_3($input_params = array())
+    {
+        
+            $setting_fields = array(
+                "success" => "0", 
+                "message" => "post_finish_success_3"
+            );
+            $output_fields = array('p_post_id','p_user_id','p_post_type','p_added_date','is_like','p_visibility','comment_count','p_post_text','live_video_url','get_actual_post','p_post_id_2','p_user_id_2','p_post_type_2','p_post_text_2','p_added_date_2','is_like_2','u_name_2','u_profile_image_2','p_status_2','expire_date_2','p_impression_count_2','is_impressed_2','comment_count_2','likes_count_2','shared_count_2','p_post_meta_data_3','p_video_thumbnail_3');
+            $output_keys = array('get_my_posts');
+            $ouput_aliases = array("p_visibility" => "visibility");
+            $inner_keys = array('get_actual_post');
+            
+            $output_array["settings"] = array_merge($this->settings_params, $setting_fields);
+            $output_array["settings"]["fields"] = $output_fields;
+            $output_array["data"] = $input_params;
+                        
+            $func_array["function"]["name"] = "post_list";
+            $func_array["function"]["output_keys"] = $output_keys;
+            $func_array["function"]["output_alias"] = $ouput_aliases;
+            $func_array["function"]["inner_keys"] = $inner_keys;
+            $func_array["function"]["single_keys"] = $this->single_keys;
+            $func_array["function"]["multiple_keys"] = $this->multiple_keys;
+            
+            $this->wsresponse->setResponseStatus(200);
+            
+            $responce_arr = $this->wsresponse->outputResponse($output_array, $func_array);
+            
+        return $responce_arr;
+    }
+                                
+    /**
+     * get_user_posts method is used to process query block.
+     * @created CIT Dev Team
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_user_posts($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $params_arr = array();
+            if(isset($input_params["user_id"])){
+                $params_arr["user_id"] = $input_params["user_id"];
+            }
+            if(isset($input_params["p_post_type"])){
+                $params_arr["p_post_type"] = $input_params["p_post_type"];
+            }
+            if(isset($input_params["is_feed"])){
+                $params_arr["is_feed"] = $input_params["is_feed"];
+            }
+            if(isset($input_params["profile_user_id"])){
+                $params_arr["profile_user_id"] = $input_params["profile_user_id"];
+            }
+            $page_index = isset($input_params["page_index"]) ? $input_params["page_index"] : 1;
+            $this->block_result = $this->post_model->get_user_posts($params_arr, $page_index, $this->settings_params);
+            
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    
+                    $data = $data_arr["p_added_date_1"];
+                    if (method_exists($this->general, "dateTimeSystemFormat")) {
+                        $data = $this->general->dateTimeSystemFormat($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["p_added_date_1"] = $data;
+                    
+                    $data = $data_arr["user_profile_image"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_profile_image";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["user_profile_image"] = $data;
+                    
+                    $data = $data_arr["p_video_thumbnail_1"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $image_arr["def_img"] = "Yes";
+                    $dest_path = "thumbnail";
+                    $image_arr["path"] = $this->general->getImageNestedFolders($dest_path);
+                    $data = $this->general->get_image($image_arr);
+                    
+                    $result_arr[$data_key]["p_video_thumbnail_1"] = $data;
+                    
+                    $data = $data_arr["custom_field_6"];
+                    if (method_exists($this, "post_detail_url")) {
+                        $data = $this->post_detail_url($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["custom_field_6"] = $data;
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_user_posts"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+
+    /**
+     * is_having_user_posts method is used to process conditions.
+     * @created  | 06.09.2019
+     * @modified  | 06.09.2019
+     * @param array $input_params input_params array to process condition flow.
+     * @return array $block_result returns result of condition block as array.
+     */
+    public function is_having_user_posts($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $cc_lo_0 = (empty($input_params["get_user_posts"]) ? 0 : 1);
+            $cc_ro_0 = 1;
+            
+            $cc_fr_0 = ($cc_lo_0 == $cc_ro_0) ? TRUE : FALSE;    
+            
+            if(!$cc_fr_0){
+                throw new Exception("Some conditions does not match.");
+            }
+                $success = 1;
+                $message = "Conditions matched.";
+            } catch (Exception $e) {
+                $success = 0;
+                $message = $e->getMessage();
+            }
+            $this->block_result["success"] = $success;
+            $this->block_result["message"] = $message;
+            return $this->block_result;
+            
+    }
+                                
+    /**
+     * prepare_user_post_id_list method is used to process custom function.
+     * @created  | 06.09.2019
+     * @modified  | 09.09.2019
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function prepare_user_post_id_list($input_params = array())
+    {
+                    
+            if (!method_exists($this, "getUserPostIDList")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->getUserPostIDList($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["prepare_user_post_id_list"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * get_user_post_comment_stats method is used to process query block.
+     * @created  | 06.09.2019
+     * @modified Nandini Santoki | 23.09.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_user_post_comment_stats($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $post_stats_cond_1 = isset($input_params["post_stats_cond_1"]) ? $input_params["post_stats_cond_1"] : "";
+            $this->block_result = $this->wscustom_model->get_user_post_comment_stats($post_stats_cond_1);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_user_post_comment_stats"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * get_user_post_like_stats method is used to process query block.
+     * @created  | 07.11.2019
+     * @modified Nandini Santoki | 03.11.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_user_post_like_stats($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $post_stats_cond_1 = isset($input_params["post_stats_cond_1"]) ? $input_params["post_stats_cond_1"] : "";
+            $this->block_result = $this->wscustom_model->get_user_post_like_stats($post_stats_cond_1);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_user_post_like_stats"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * get_user_post_share_stats method is used to process query block.
+     * @created  | 07.11.2019
+     * @modified Nandini Santoki | 18.09.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_user_post_share_stats($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $post_stats_cond_1 = isset($input_params["post_stats_cond_1"]) ? $input_params["post_stats_cond_1"] : "";
+            $this->block_result = $this->wscustom_model->get_user_post_share_stats($post_stats_cond_1);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_user_post_share_stats"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * assign_user_post_statistics method is used to process custom function.
+     * @created  | 06.09.2019
+     * @modified  | 06.09.2019
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function assign_user_post_statistics($input_params = array())
+    {
+                    
+            if (!method_exists($this, "assignUserPostStats")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->assignUserPostStats($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["assign_user_post_statistics"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * custom_fetch_user_post_id method is used to process custom function.
+     * @created Jay Rajput | 22.08.2022
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function custom_fetch_user_post_id($input_params = array())
+    {
+                    
+            if (!method_exists($this, "fetch_user_post_id")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->fetch_user_post_id($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["custom_fetch_user_post_id"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * get_user_post_media method is used to process query block.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_user_post_media($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $user_id = isset($input_params["user_id"]) ? $input_params["user_id"] : "";
+            $user_post_id = isset($input_params["user_post_id"]) ? $input_params["user_post_id"] : "";
+            $this->block_result = $this->post_media_model->get_user_post_media($user_id, $user_post_id);
+            
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    
+                    $data = $data_arr["pm_upload_file_1"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_1"] != "") ? $data_arr["pm_user_id_1"] : $input_params["pm_user_id_1"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_upload_file_1"] = $data;
+                    
+                    $data = $data_arr["pm_added_date_1"];
+                    if (method_exists($this->general, "getDateOnly")) {
+                        $data = $this->general->getDateOnly($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["pm_added_date_1"] = $data;
+                    
+                    $data = $data_arr["pm_video_thumbnail_1"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_1"] != "") ? $data_arr["pm_user_id_1"] : $input_params["pm_user_id_1"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_video_thumbnail_1"] = $data;
+                    
+                    $data = $data_arr["display_image_1"];
+                    if (method_exists($this, "get_display_image_others")) {
+                        $data = $this->get_display_image_others($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["display_image_1"] = $data;
+                    
+                    $data = $data_arr["pm_upload_file_org_1"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_1"] != "") ? $data_arr["pm_user_id_1"] : $input_params["pm_user_id_1"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["no_img"] = FALSE;
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_upload_file_org_1"] = $data;
+                    
+                    $data = $data_arr["pm_video_thumbnail_org_1"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_1"] != "") ? $data_arr["pm_user_id_1"] : $input_params["pm_user_id_1"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_video_thumbnail_org_1"] = $data;
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_user_post_media"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                           
+    /**
+     * start_loop_1 method is used to process loop flow.
+     * @created Jay Rajput | 08.09.2022
+     * @modified Jay Rajput | 08.09.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function start_loop_1($input_params = array())
+    {
+        $this->iterate_start_loop_1($input_params["get_user_posts"], $input_params);
+        return $input_params;
+    }
+    
+
+    /**
+     * check_user_post method is used to process conditions.
+     * @created Anjaneyulu Gulla | 26.10.2018
+     * @modified Anjaneyulu Gulla | 26.10.2018
+     * @param array $input_params input_params array to process condition flow.
+     * @return array $block_result returns result of condition block as array.
+     */
+    public function check_user_post($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $cc_lo_0 = $input_params["p_post_type_1"];
+            $cc_ro_0 = "Share";
+            
+            $cc_fr_0 = ($cc_lo_0 == $cc_ro_0) ? TRUE : FALSE;    
+            
+            if(!$cc_fr_0){
+                throw new Exception("Some conditions does not match.");
+            }
+                $success = 1;
+                $message = "Conditions matched.";
+            } catch (Exception $e) {
+                $success = 0;
+                $message = $e->getMessage();
+            }
+            $this->block_result["success"] = $success;
+            $this->block_result["message"] = $message;
+            return $this->block_result;
+            
+    }
+                                
+    /**
+     * get_user_actual_post method is used to process query block.
+     * @created Anjaneyulu Gulla | 26.10.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_user_actual_post($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $user_id = isset($input_params["user_id"]) ? $input_params["user_id"] : "";
+            $p_actual_post_id_1 = isset($input_params["p_actual_post_id_1"]) ? $input_params["p_actual_post_id_1"] : "";
+            $this->block_result = $this->post_model->get_user_actual_post($user_id, $p_actual_post_id_1);
+            
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    
+                    $data = $data_arr["p_added_date_3"];
+                    if (method_exists($this->general, "dateTimeSystemFormat")) {
+                        $data = $this->general->dateTimeSystemFormat($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["p_added_date_3"] = $data;
+                    
+                    $data = $data_arr["u_profile_image_1"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_profile_image";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["u_profile_image_1"] = $data;
+                    
+                    $data = $data_arr["p_video_thumbnail_2"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $image_arr["def_img"] = "Yes";
+                    $dest_path = "thumbnail";
+                    $image_arr["path"] = $this->general->getImageNestedFolders($dest_path);
+                    $data = $this->general->get_image($image_arr);
+                    
+                    $result_arr[$data_key]["p_video_thumbnail_2"] = $data;
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_user_actual_post"] = $this->block_result["data"];
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $this->block_result["data"]);
+            
+        return $input_params;
+    }
+                                
+    /**
+     * get_user_actual_post_statistics method is used to process query block.
+     * @created  | 09.09.2019
+     * @modified Nandini Santoki | 03.11.2020
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_user_actual_post_statistics($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $p_actual_post_id_1 = isset($input_params["p_actual_post_id_1"]) ? $input_params["p_actual_post_id_1"] : "";
+            $this->block_result = $this->wscustom_model->get_user_actual_post_statistics($p_actual_post_id_1);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_user_actual_post_statistics"] = $this->block_result["data"];
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $this->block_result["data"]);
+            
+        return $input_params;
+    }
+                                
+    /**
+     * assign_user_actual_post_stats method is used to process custom function.
+     * @created  | 09.09.2019
+     * @modified  | 09.09.2019
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function assign_user_actual_post_stats($input_params = array())
+    {
+                    
+            if (!method_exists($this, "assignUserActualPostStats")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->assignUserActualPostStats($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["assign_user_actual_post_stats"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+                                
+    /**
+     * get_uesr_post_media method is used to process query block.
+     * @created Anjaneyulu Gulla | 26.10.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function get_uesr_post_media($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $user_id = isset($input_params["user_id"]) ? $input_params["user_id"] : "";
+            $p_actual_post_id_1 = isset($input_params["p_actual_post_id_1"]) ? $input_params["p_actual_post_id_1"] : "";
+            $this->block_result = $this->post_media_model->get_uesr_post_media($user_id, $p_actual_post_id_1);
+            
+            if(!$this->block_result["success"]){
+                throw new Exception("No records found.");
+            }
+            $result_arr = $this->block_result["data"];
+            if(is_array($result_arr) && count($result_arr) > 0){
+                $i = 0;
+                foreach($result_arr as $data_key => $data_arr){
+                    
+                    $data = $data_arr["pm_upload_file_3"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_3"] != "") ? $data_arr["pm_user_id_3"] : $input_params["pm_user_id_3"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_upload_file_3"] = $data;
+                    
+                    $data = $data_arr["pm_video_thumbnail_3"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_3"] != "") ? $data_arr["pm_user_id_3"] : $input_params["pm_user_id_3"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_video_thumbnail_3"] = $data;
+                    
+                    $data = $data_arr["display_image_3"];
+                    if (method_exists($this, "get_display_image")) {
+                        $data = $this->get_display_image($data, $result_arr[$data_key], $i, $input_params);
+                    }
+                    $result_arr[$data_key]["display_image_3"] = $data;
+                    
+                    $data = $data_arr["pm_upload_file_org_3"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_3"] != "") ? $data_arr["pm_user_id_3"] : $input_params["pm_user_id_3"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_upload_file_org_3"] = $data;
+                    
+                    $data = $data_arr["pm_video_thumbnail_org_3"];
+                    $image_arr = array();                        
+                    $image_arr["image_name"] = $data;
+                    $image_arr["ext"] = implode(",", $this->config->item("IMAGE_EXTENSION_ARR"));
+                    $p_key = ($data_arr["pm_user_id_3"] != "") ? $data_arr["pm_user_id_3"] : $input_params["pm_user_id_3"]; 
+                    $image_arr["pk"] = $p_key;
+                    $image_arr["def_img"] = "Yes";
+                    $image_arr["path"] = "compress_post_video";
+                    $data = $this->general->get_image_aws($image_arr);
+                    
+                    $result_arr[$data_key]["pm_video_thumbnail_org_3"] = $data;
+                    
+                    $i++;
+                }
+                $this->block_result["data"] = $result_arr;
+            }
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["get_uesr_post_media"] = $this->block_result["data"];
+            
+        return $input_params;
+    }
+                                
+    /**
+     * update_myfeedupdatedate_users method is used to process query block.
+     * @created Rohit Patidar | 19.05.2021
+     * @modified Rohit Patidar | 19.05.2021
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function update_myfeedupdatedate_users($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $params_arr = $where_arr = array();
+            if(isset($input_params["user_id"])){
+                $where_arr["user_id"] = $input_params["user_id"];
+            }
+            $params_arr["_dtmyfeedupdatedate"] = "";
+                if (method_exists($this, "getUserUpdateDate")) {
+                    $params_arr["_dtmyfeedupdatedate"] = $this->getUserUpdateDate($params_arr["_dtmyfeedupdatedate"], $input_params);
+                }
+            $this->block_result = $this->users_model->update_myfeedupdatedate_users($params_arr, $where_arr);
+            
+            } catch (Exception $e) {
+                $success = 0;
+                $this->block_result["data"] = array();
+            }
+            $input_params["update_myfeedupdatedate_users"] = $this->block_result["data"];
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $this->block_result["data"]);
+            
+        return $input_params;
+    }
+                                
+    /**
+     * custom_add_ads_user_post method is used to process custom function.
+     * @created Rohit Patidar | 13.10.2021
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $input_params returns modfied input_params array.
+     */
+    public function custom_add_ads_user_post($input_params = array())
+    {
+                    
+            if (!method_exists($this, "addAdsUserPost")) {
+                $result_arr["data"] = array();
+            } else {
+                $result_arr["data"] = $this->addAdsUserPost($input_params);
+            }
+            $format_arr = $result_arr;
+            
+            $format_arr = $this->wsresponse->assignFunctionResponse($format_arr);
+            $input_params["custom_add_ads_user_post"] = $format_arr;
+            
+            $input_params = $this->wsresponse->assignSingleRecord($input_params, $format_arr);
+        return $input_params;
+    }
+
+    /**
+     * condition_for_user_posts method is used to process conditions.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 22.08.2022
+     * @param array $input_params input_params array to process condition flow.
+     * @return array $block_result returns result of condition block as array.
+     */
+    public function condition_for_user_posts($input_params = array())
+    {
+        
+            $this->block_result = array();
+            try {
+                
+            $cc_lo_0 = (empty($input_params["get_user_posts"]) ? 0 : 1);
+            $cc_ro_0 = 1;
+            
+            $cc_fr_0 = ($cc_lo_0 == $cc_ro_0) ? TRUE : FALSE;    
+            
+            if(!$cc_fr_0){
+                throw new Exception("Some conditions does not match.");
+            }
+                $success = 1;
+                $message = "Conditions matched.";
+            } catch (Exception $e) {
+                $success = 0;
+                $message = $e->getMessage();
+            }
+            $this->block_result["success"] = $success;
+            $this->block_result["message"] = $message;
+            return $this->block_result;
+            
+    }
+
+    /**
+     * post_finish_success method is used to process finish flow.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Jay Rajput | 13.10.2022
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $responce_arr returns responce array of api.
+     */
+    public function post_finish_success($input_params = array())
+    {
+        
+            $setting_fields = array(
+                "success" => "1", 
+                "message" => "post_finish_success"
+            );
+            $output_fields = array('p_post_id_1','p_user_id_1','p_post_type_1','p_post_text_1','p_added_date_1','is_like_1','user_name','user_profile_image','p_status_1','p_actual_post_id_1','p_visibility_1','ts_tokbox_session_id_1','comment_count_1','likes_count_1','shared_count_1','p_post_meta_data','p_video_thumbnail_1','p_post_text_emoji_1','custom_field_6','p_impression_count_1','ts_archive_id_1','ts_archive_status_1','p_post_id_3','p_user_id_3','p_post_type_3','p_post_text_3','p_added_date_3','is_like_3','u_name_1','u_profile_image_1','p_status_3','comment_count_3','likes_count_3','shared_count_3','p_post_meta_data_2','p_video_thumbnail_2','pm_post_id_3','pm_post_media_id_3','pm_media_type_3','pm_user_id_3','pm_upload_file_3','pm_added_date_3','pm_video_thumbnail_3','display_image_3','pm_views_count_2','is_viewed_3','pm_upload_file_org_3','pm_video_thumbnail_org_3','media_like_count_1','media_comment_count_4','is_media_like_4','pm_media_height','pm_media_width','pm_post_media_id_1','pm_post_id_1','pm_media_type_1','pm_user_id_1','pm_upload_file_1','pm_added_date_1','pm_video_thumbnail_1','display_image_1','pm_views_count_3','is_viewed','pm_upload_file_org_1','pm_video_thumbnail_org_1','media_like_count_3','media_comment_count_3','is_media_like_3','pm_mheight','pm_mwidth');
+            $output_keys = array('get_user_posts','get_user_post_media');
+            $ouput_aliases = array("get_user_posts" => "get_posts","p_post_id_1" => "post_id","p_user_id_1" => "posted_user_id","p_post_type_1" => "post_type","p_post_text_1" => "post_text_emoji","p_added_date_1" => "added_date","is_like_1" => "is_like","p_status_1" => "status","p_actual_post_id_1" => "actual_post_id","p_visibility_1" => "visibility","ts_tokbox_session_id_1" => "tokbox_session_id","comment_count_1" => "comment_count","likes_count_1" => "likes_count","shared_count_1" => "shared_count","p_video_thumbnail_1" => "live_video_thumbnail","p_post_text_emoji_1" => "post_text","custom_field_6" => "post_detail_url","p_impression_count_1" => "impression_count","ts_archive_id_1" => "ts_archive_id","ts_archive_status_1" => "ts_archive_status","p_post_id_3" => "p_post_id","p_user_id_3" => "p_user_id","p_post_type_3" => "p_post_type","p_post_text_3" => "p_post_text","p_added_date_3" => "p_added_date","is_like_3" => "is_like","u_name_1" => "user_name","u_profile_image_1" => "user_profile_image","p_status_3" => "p_status","comment_count_3" => "comment_count","likes_count_3" => "p_likes_count","shared_count_3" => "shared_count","p_post_meta_data_2" => "p_post_meta_data","p_video_thumbnail_2" => "live_video_thumbnail","pm_post_id_3" => "pm_post_id","pm_post_media_id_3" => "pm_post_media_id","pm_media_type_3" => "pm_media_type","pm_user_id_3" => "pm_user_id","pm_upload_file_3" => "pm_upload_file","pm_added_date_3" => "pm_added_date","pm_video_thumbnail_3" => "pm_video_thumbnail","display_image_3" => "display_image","pm_views_count_2" => "pm_views_count","is_viewed_3" => "is_viewed","pm_upload_file_org_3" => "upload_file_org","pm_video_thumbnail_org_3" => "video_thumbnail_org","media_like_count_1" => "media_like_count","media_comment_count_4" => "media_comment_count","is_media_like_4" => "is_media_like","pm_media_height" => "media_height","pm_media_width" => "media_width","get_user_post_media" => "get_post_media","pm_post_media_id_1" => "pm_post_media_id","pm_post_id_1" => "post_id","pm_media_type_1" => "pm_media_type","pm_user_id_1" => "pm_user_id","pm_upload_file_1" => "pm_upload_file","pm_added_date_1" => "pm_added_date","pm_video_thumbnail_1" => "pm_video_thumbnail","display_image_1" => "display_image","pm_views_count_3" => "pm_views_count","pm_upload_file_org_1" => "upload_file_org","pm_video_thumbnail_org_1" => "video_thumbnail_org","media_like_count_3" => "media_like_count","media_comment_count_3" => "media_comment_count","is_media_like_3" => "is_media_like","pm_mheight" => "media_height","pm_mwidth" => "media_width");
+            
+            $output_array["settings"] = array_merge($this->settings_params, $setting_fields);
+            $output_array["settings"]["fields"] = $output_fields;
+            $output_array["data"] = $input_params;
+                        
+            $func_array["function"]["name"] = "post_list";
+            $func_array["function"]["output_keys"] = $output_keys;
+            $func_array["function"]["output_alias"] = $ouput_aliases;
+            $func_array["function"]["single_keys"] = $this->single_keys;
+            $func_array["function"]["multiple_keys"] = $this->multiple_keys;
+            
+            $this->wsresponse->setResponseStatus(200);
+            
+            $responce_arr = $this->wsresponse->outputResponse($output_array, $func_array);
+            
+        return $responce_arr;
+    }
+
+    /**
+     * post_finish_success_1 method is used to process finish flow.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Srilakshmi  | 25.10.2018
+     * @param array $input_params input_params array to process loop flow.
+     * @return array $responce_arr returns responce array of api.
+     */
+    public function post_finish_success_1($input_params = array())
+    {
+        
+            $setting_fields = array(
+                "success" => "0", 
+                "message" => "post_finish_success_1"
+            );
+            $output_fields = array();
+            
+            $output_array["settings"] = array_merge($this->settings_params, $setting_fields);
+            $output_array["settings"]["fields"] = $output_fields;
+            $output_array["data"] = $input_params;
+                        
+            $func_array["function"]["name"] = "post_list";
+            $func_array["function"]["single_keys"] = $this->single_keys;
+            $func_array["function"]["multiple_keys"] = $this->multiple_keys;
+            
+            $this->wsresponse->setResponseStatus(200);
+            
+            $responce_arr = $this->wsresponse->outputResponse($output_array, $func_array);
+            
+        return $responce_arr;
+    }
+    
+    /**
+     * iterate_start_loop method is used to iterate loop.
+     * @created Jay Rajput | 08.09.2022
+     * @modified Jay Rajput | 08.09.2022
+     * @param array $get_my_posts_lp_arr get_my_posts_lp_arr array to iterate loop.
+     * @param array $input_params_addr $input_params_addr array to address original input params.
+     */
+    public function iterate_start_loop(&$get_my_posts_lp_arr = array(), &$input_params_addr = array())
+    {
+        
+         
+        $input_params_loc = $input_params_addr;
+        $_loop_params_loc = $get_my_posts_lp_arr;
+        $_lp_ini = 0;
+        $_lp_end = count($_loop_params_loc);
+        for ($i = $_lp_ini; $i < $_lp_end; $i += 1) {
+            $get_my_posts_lp_pms = $input_params_loc;
+            
+            unset($get_my_posts_lp_pms["get_my_posts"]);
+            if(is_array($_loop_params_loc[$i])){
+                $get_my_posts_lp_pms = $_loop_params_loc[$i] + $input_params_loc;
+            } else {
+                $get_my_posts_lp_pms["get_my_posts"] = $_loop_params_loc[$i];
+                $_loop_params_loc[$i] = array();
+                $_loop_params_loc[$i]["get_my_posts"] = $get_my_posts_lp_pms["get_my_posts"];
+            }
+            
+            $get_my_posts_lp_pms["i"] = $i;
+            $input_params = $get_my_posts_lp_pms;
+            
+        $condition_res = $this->check_post_type($input_params);
+        
+        if($condition_res["success"]) {
+        
+    
+        $input_params = $this->get_actual_post($input_params);
+        
+    
+        $input_params = $this->get_actual_post_statistics($input_params);
+        
+    
+        $input_params = $this->assign_actual_post_stats($input_params);
+        
+    
+        $input_params = $this->get_actual_post_media($input_params);
+        
+    
+        }
+            
+    
+            
+            $get_my_posts_lp_arr[$i] = $this->wsresponse->filterLoopParams($input_params, $_loop_params_loc[$i], $get_my_posts_lp_pms);
+        }
+        
+    }
+
+    /**
+     * iterate_start_loop_1 method is used to iterate loop.
+     * @created Jay Rajput | 08.09.2022
+     * @modified Jay Rajput | 08.09.2022
+     * @param array $get_user_posts_lp_arr get_user_posts_lp_arr array to iterate loop.
+     * @param array $input_params_addr $input_params_addr array to address original input params.
+     */
+    public function iterate_start_loop_1(&$get_user_posts_lp_arr = array(), &$input_params_addr = array())
+    {
+        
+         
+        $input_params_loc = $input_params_addr;
+        $_loop_params_loc = $get_user_posts_lp_arr;
+        $_lp_ini = 0;
+        $_lp_end = count($_loop_params_loc);
+        for ($i = $_lp_ini; $i < $_lp_end; $i += 1) {
+            $get_user_posts_lp_pms = $input_params_loc;
+            
+            unset($get_user_posts_lp_pms["get_user_posts"]);
+            if(is_array($_loop_params_loc[$i])){
+                $get_user_posts_lp_pms = $_loop_params_loc[$i] + $input_params_loc;
+            } else {
+                $get_user_posts_lp_pms["get_user_posts"] = $_loop_params_loc[$i];
+                $_loop_params_loc[$i] = array();
+                $_loop_params_loc[$i]["get_user_posts"] = $get_user_posts_lp_pms["get_user_posts"];
+            }
+            
+            $get_user_posts_lp_pms["i"] = $i;
+            $input_params = $get_user_posts_lp_pms;
+            
+        $condition_res = $this->check_user_post($input_params);
+        
+        if($condition_res["success"]) {
+        
+    
+        $input_params = $this->get_user_actual_post($input_params);
+        
+    
+        $input_params = $this->get_user_actual_post_statistics($input_params);
+        
+    
+        $input_params = $this->assign_user_actual_post_stats($input_params);
+        
+    
+        $input_params = $this->get_uesr_post_media($input_params);
+        
+    
+        }
+            
+    
+            
+            $get_user_posts_lp_arr[$i] = $this->wsresponse->filterLoopParams($input_params, $_loop_params_loc[$i], $get_user_posts_lp_pms);
+        }
+        
+    }
+}

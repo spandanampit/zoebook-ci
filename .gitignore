@@ -1,0 +1,37 @@
+# Composer
+vendor/
+
+# Node
+node_modules/
+nodejs/
+
+# Firebase keys
+*.json
+
+# Private keys
+*.pem
+*.p8
+
+# Environment files
+.env
+
+# CI3 sensitive configs
+application/config/database.php
+application/config/payment.php
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.env
+vendor/
+node_modules/
+nodejs/
+*.json
+*.pem
+*.p8
+application/config/database.php
+application/config/payment.php
+.vscode/
+

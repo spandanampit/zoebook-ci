@@ -1,0 +1,1348 @@
+<?php  
+
+defined('BASEPATH') || exit('No direct script access allowed');
+
+/**
+ * Description of Post Media Model
+ * 
+ * @category webservice
+ *            
+ * @package post
+ *
+ * @subpackage models
+ *
+ * @module Post Media
+ * 
+ * @class Post_media_model.php
+ * 
+ * @path application\webservice\post\models\Post_media_model.php
+ * 
+ * @version 4.3
+ *
+ * @author CIT Dev Team
+ * 
+ * @since 23.06.2021
+ */
+ 
+class Post_media_model extends CI_Model
+{
+    public $default_lang = 'EN';
+    
+    /**
+     * __construct method is used to set model preferences while model object initialization.
+     */
+    public function __construct() {
+        parent::__construct();
+        $this->load->helper('listing');
+        $this->default_lang = $this->general->getLangRequestValue();
+    }
+    
+    /**
+     * insert_post_media method is used to execute database queries for Add Post Media API.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Alpesh Patel | 27.05.2021
+     * @param array $params_arr params_arr array to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function insert_post_media($params_arr = array())
+    {
+        try {
+            $result_arr = array();
+                        
+            if(!is_array($params_arr) || count($params_arr) == 0){
+                throw new Exception("Insert data not found.");
+            }
+
+            
+            if(isset($params_arr["post_id"])){
+                $this->db->set("iPostId", $params_arr["post_id"]);
+            }
+            if(isset($params_arr["user_id"])){
+                $this->db->set("iUserId", $params_arr["user_id"]);
+            }
+            if(isset($params_arr["upload_file"]) && !empty($params_arr["upload_file"])){
+                $this->db->set("vUploadFile", $params_arr["upload_file"]);
+            }
+            if(isset($params_arr["file_type"])){
+                $this->db->set("eMediaType", $params_arr["file_type"]);
+            }
+            $this->db->set($this->db->protect("dAddedDate"), $params_arr["_daddeddate"], FALSE);
+            $this->db->set($this->db->protect("dModifiedDate"), $params_arr["_dmodifieddate"], FALSE);
+            $this->db->set("eStatus", $params_arr["_estatus"]);
+            if(isset($params_arr["video_thumbnail"]) && !empty($params_arr["video_thumbnail"])){
+                $this->db->set("vVideoThumbnail", $params_arr["video_thumbnail"]);
+            }
+            if(isset($params_arr["width"])){
+                $this->db->set("vMWidth", $params_arr["width"]);
+            }
+            if(isset($params_arr["height"])){
+                $this->db->set("vMHeight", $params_arr["height"]);
+            }
+            $this->db->insert("post_media");
+            $insert_id = $this->db->insert_id();
+            if(!$insert_id){
+                 throw new Exception("Failure in insertion.");
+            }
+            $result_param = "insert_id";
+            $result_arr[0][$result_param] = $insert_id;
+            $success = 1;
+            
+            $this->db->where("iPostMediaId", $insert_id);
+            $this->db->select("iUserId","iUserId");
+            $data_obj = $this->db->get("post_media");
+            $data_arr = is_object($data_obj) ? $data_obj->result_array() : array();
+            $return_arr["array"] = $data_arr;
+            
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_my_post_media method is used to execute database queries for Post List API.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Rohit Patidar | 18.05.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_post_id p_post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_my_post_media($user_id = '', $p_post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostId AS pm_post_id");
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.dAddedDate AS pm_added_date");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            $this->db->select("(".$this->db->escape("").") AS display_image", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count_1");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed_1", FALSE);
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org", FALSE);
+            $this->db->select("(pm.vVideoThumbnail) AS pm_video_thumbnail_org", FALSE);
+            $this->db->select("((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml left join users u on u.iUsersId = pml.iUserId and u.eStatus = 'Active' WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1 )) AS media_like_count_2", FALSE);
+            $this->db->select("((SELECT count(iPostCommentId) FROM post_comment WHERE iPostId = pm.iPostId AND iParentId = 0 AND eStatus = 'Active' AND iPostMediaId = pm.iPostMediaId)) AS media_comment_count_1", FALSE);
+            $this->db->select("(SELECT count(iPostMediaLikesId) FROM post_media_likes  pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.iUserId = '".$user_id."' AND pml.eStatus=1) AS is_media_like_1", FALSE);
+            $this->db->select("pm.vMHeight AS pm_mheight_1");
+            $this->db->select("pm.vMWidth AS pm_mwidth_1");
+            if(isset($p_post_id) && $p_post_id != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_user_post_media method is used to execute database queries for Post List API.
+     * @created Vamsi Ippe | 19.09.2018
+     * @modified Rohit Patidar | 26.05.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_post_id_1 p_post_id_1 is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_user_post_media($user_id = '', $p_post_id_1 = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id_1");
+            $this->db->select("pm.iPostId AS pm_post_id_1");
+            $this->db->select("pm.eMediaType AS pm_media_type_1");
+            $this->db->select("pm.iUserId AS pm_user_id_1");
+            $this->db->select("pm.vUploadFile AS pm_upload_file_1");
+            $this->db->select("pm.dAddedDate AS pm_added_date_1");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail_1");
+            $this->db->select("(".$this->db->escape("").") AS display_image_1", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count_3");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed", FALSE);
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org_1", FALSE);
+            $this->db->select("(pm.vVideoThumbnail) AS pm_video_thumbnail_org_1", FALSE);
+            $this->db->select("((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1)) AS media_like_count_3", FALSE);
+            $this->db->select("((SELECT count(iPostCommentId) FROM post_comment WHERE iPostId = pm.iPostId AND iParentId = 0 AND eStatus = 'Active' AND iPostMediaId = pm.iPostMediaId)) AS media_comment_count_3", FALSE);
+            $this->db->select("(SELECT count(iPostMediaLikesId) FROM post_media_likes  pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.iUserId = '".$user_id."') AS is_media_like_3", FALSE);
+            $this->db->select("pm.vMHeight AS pm_mheight");
+            $this->db->select("pm.vMWidth AS pm_mwidth");
+            if(isset($p_post_id_1) && $p_post_id_1 != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id_1);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            $this->db->order_by("pm.iPostMediaId", "asc");
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_actual_post_media method is used to execute database queries for Post List API.
+     * @created Anjaneyulu Gulla | 25.10.2018
+     * @modified Alpesh Patel | 10.06.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_actual_post_id p_actual_post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_actual_post_media($user_id = '', $p_actual_post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostId AS pm_post_id_2");
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id_2");
+            $this->db->select("pm.eMediaType AS pm_media_type_2");
+            $this->db->select("pm.iUserId AS pm_user_id_2");
+            $this->db->select("pm.vUploadFile AS pm_upload_file_2");
+            $this->db->select("pm.dAddedDate AS pm_added_date_2");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail_2");
+            $this->db->select("(".$this->db->escape("").") AS display_image_2", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed_2", FALSE);
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org_2", FALSE);
+            $this->db->select("(pm.vVideoThumbnail) AS pm_video_thumbnail_org_2", FALSE);
+            $this->db->select("((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1)) AS media_like_count", FALSE);
+            $this->db->select("((SELECT count(iPostCommentId) FROM post_comment WHERE iPostId = pm.iPostId AND iParentId = 0 AND eStatus = 'Active' AND iPostMediaId = pm.iPostMediaId)) AS media_comment_count_2", FALSE);
+            $this->db->select("(SELECT count(iPostMediaLikesId) FROM post_media_likes  pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.iUserId = '".$user_id."' AND pml.eStatus=1) AS is_media_like_2", FALSE);
+            $this->db->select("pm.vMHeight AS media_height");
+            $this->db->select("pm.vMWidth AS media_width");
+            if(isset($p_actual_post_id) && $p_actual_post_id != ""){ 
+                $this->db->where("pm.iPostId =", $p_actual_post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_uesr_post_media method is used to execute database queries for Post List API.
+     * @created Anjaneyulu Gulla | 26.10.2018
+     * @modified Alpesh Patel | 10.06.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_actual_post_id_1 p_actual_post_id_1 is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_uesr_post_media($user_id = '', $p_actual_post_id_1 = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostId AS pm_post_id_3");
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id_3");
+            $this->db->select("pm.eMediaType AS pm_media_type_3");
+            $this->db->select("pm.iUserId AS pm_user_id_3");
+            $this->db->select("pm.vUploadFile AS pm_upload_file_3");
+            $this->db->select("pm.dAddedDate AS pm_added_date_3");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail_3");
+            $this->db->select("(".$this->db->escape("").") AS display_image_3", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count_2");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed_3", FALSE);
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org_3", FALSE);
+            $this->db->select("(pm.vVideoThumbnail) AS pm_video_thumbnail_org_3", FALSE);
+            $this->db->select("((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1)) AS media_like_count_1", FALSE);
+            $this->db->select("((SELECT count(iPostCommentId) FROM post_comment WHERE iPostId = pm.iPostId AND iParentId = 0 AND eStatus = 'Active' AND iPostMediaId = pm.iPostMediaId)) AS media_comment_count_4", FALSE);
+            $this->db->select("(SELECT count(iPostMediaLikesId) FROM post_media_likes  pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.iUserId = '".$user_id."' AND pml.eStatus=1) AS is_media_like_4", FALSE);
+            $this->db->select("pm.vMHeight AS pm_media_height");
+            $this->db->select("pm.vMWidth AS pm_media_width");
+            if(isset($p_actual_post_id_1) && $p_actual_post_id_1 != ""){ 
+                $this->db->where("pm.iPostId =", $p_actual_post_id_1);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_post_media method is used to execute database queries for Post Detail API.
+     * @created Vamsi Ippe | 20.09.2018
+     * @modified Alpesh Patel | 21.05.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $upload_file upload_file is used to process query block.
+     * @param string $p_post_id p_post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_post_media($user_id = '', $upload_file = '', $p_post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.vMHeight AS pm_media_height");
+            $this->db->select("pm.vMWidth AS pm_media_width");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            $this->db->select("pm.iViewsCount AS pm_views_count");
+            $this->db->select("pm.dAddedDate AS pm_added_date");
+            $this->db->select("(((IF((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1 AND pml.iUserId='".$user_id."')>0,1,0)))) AS is_liked", FALSE);
+            $this->db->select("(((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1))) AS total_likes_count", FALSE);
+            $this->db->select("(((SELECT count(iPostCommentId) FROM post_comment WHERE iPostId = pm.iPostId AND iParentId = 0 AND eStatus = 'Active' AND iPostMediaId = pm.iPostMediaId))) AS total_comments_count", FALSE);
+            $this->db->select("pm.iPostId AS pm_post_id");
+            $this->db->select("((SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."')) AS is_viewed", FALSE);
+            $this->db->select("(('".$upload_file."')) AS display_image", FALSE);
+            if(isset($p_post_id) && $p_post_id != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            $this->db->order_by("pm.iPostMediaId", "asc");
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_post_media_list method is used to execute database queries for Post Detail API.
+     * @created Pavan  | 02.11.2018
+     * @modified Pavan  | 02.11.2018
+     * @param string $post_media_id post_media_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_post_media_list($post_media_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id_1");
+            $this->db->select("pm.iPostId AS pm_post_id_1");
+            if(isset($post_media_id) && $post_media_id != ""){ 
+                $this->db->where("pm.iPostMediaId =", $post_media_id);
+            }
+            $this->db->where("1=2", FALSE, FALSE);
+            
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_post_media_info method is used to execute database queries for Comment On Post API.
+     * @created CIT Dev Team
+     * @modified Pavan  | 02.11.2018
+     * @param string $post_media_id post_media_id is used to process query block.
+     * @param string $post_id post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_post_media_info($post_media_id = '', $post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.iPostId AS pm_post_id");
+            if(isset($post_media_id) && $post_media_id != ""){ 
+                $this->db->where("pm.iPostMediaId =", $post_media_id);
+            }
+            if(isset($post_id) && $post_id != ""){ 
+                $this->db->where("pm.iPostId =", $post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_post_media_info_v1 method is used to execute database queries for Comments List API.
+     * @created CIT Dev Team
+     * @modified Pavan  | 02.11.2018
+     * @param string $post_media_id post_media_id is used to process query block.
+     * @param string $post_id post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_post_media_info_v1($post_media_id = '', $post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.iPostId AS pm_post_id");
+            if(isset($post_media_id) && $post_media_id != ""){ 
+                $this->db->where("pm.iPostMediaId =", $post_media_id);
+            }
+            if(isset($post_id) && $post_id != ""){ 
+                $this->db->where("pm.iPostId =", $post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_media_post_media method is used to execute database queries for User Albums API.
+     * @created CIT Dev Team
+     * @modified Anjaneyulu Gulla | 13.06.2020
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_post_id p_post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_media_post_media($user_id = '', $p_post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostId AS pm_post_id");
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.dAddedDate AS pm_added_date");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            $this->db->select("(".$this->db->escape("").") AS display_image", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed", FALSE);
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org", FALSE);
+            if(isset($p_post_id) && $p_post_id != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            $this->db->order_by("pm.iPostMediaId", "asc");
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_user_media_post method is used to execute database queries for User Albums API.
+     * @created Rohit Patidar | 10.06.2021
+     * @modified Rohit Patidar | 10.06.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_post_id_1 p_post_id_1 is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_user_media_post($user_id = '', $p_post_id_1 = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id_1");
+            $this->db->select("pm.iPostId AS pm_post_id_1");
+            $this->db->select("pm.eMediaType AS pm_media_type_1");
+            $this->db->select("pm.iUserId AS pm_user_id_1");
+            $this->db->select("pm.vUploadFile AS pm_upload_file_1");
+            $this->db->select("pm.dAddedDate AS pm_added_date_1");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail_1");
+            $this->db->select("(".$this->db->escape("").") AS display_image_1", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count_1");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed_1", FALSE);
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org_1", FALSE);
+            if(isset($p_post_id_1) && $p_post_id_1 != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id_1);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            $this->db->order_by("pm.iPostMediaId", "asc");
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_media method is used to execute database queries for Delete Media API.
+     * @created Vamsi Ippe | 27.09.2018
+     * @modified Vamsi Ippe | 27.09.2018
+     * @param string $post_media_id post_media_id is used to process query block.
+     * @param string $post_id post_id is used to process query block.
+     * @param string $user_id user_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_media($post_media_id = '', $post_id = '', $user_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            if($tmp_arr = filterEmptyValues($post_media_id)){
+                $old_arr = $post_media_id;
+                $post_media_id = $tmp_arr;
+                $this->db->where_in("pm.iPostMediaId", $post_media_id);
+                $post_media_id = $old_arr;
+            }
+            if(isset($post_id) && $post_id != ""){ 
+                $this->db->where("pm.iPostId =", $post_id);
+            }
+            if(isset($user_id) && $user_id != ""){ 
+                $this->db->where("pm.iUserId =", $user_id);
+            }
+            
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * delete_media_individual method is used to execute database queries for Delete Media API.
+     * @created CIT Dev Team
+     * @modified Vamsi Ippe | 27.09.2018
+     * @param string $post_id post_id is used to process query block.
+     * @param string $post_media_id post_media_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function delete_media_individual($post_id = '', $post_media_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            
+            if(isset($post_id) && $post_id != ""){ 
+                $this->db->where("iPostId =", $post_id);
+            }
+            if($tmp_arr = filterEmptyValues($post_media_id)){
+                $old_arr = $post_media_id;
+                $post_media_id = $tmp_arr;
+                $this->db->where_in("iPostMediaId", $post_media_id);
+                $post_media_id = $old_arr;
+            }
+            $res = $this->db->delete("post_media");
+            if(!$res){
+                 throw new Exception("Failure in deletion.");
+            }
+            $affected_rows = $this->db->affected_rows();
+            $result_param = "affected_rows4";
+            $result_arr[0][$result_param] = $affected_rows;
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * check_post_media method is used to execute database queries for Like Post Media API.
+     * @created Anjaneyulu Gulla | 29.10.2018
+     * @modified Anjaneyulu Gulla | 29.10.2018
+     * @param string $media_id media_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function check_post_media($media_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.eStatus AS pm_status");
+            if(isset($media_id) && $media_id != ""){ 
+                $this->db->where("pm.iPostMediaId =", $media_id);
+            }
+            
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_posted_user_details_v1 method is used to execute database queries for Like Post Media API.
+     * @created CIT Dev Team
+     * @modified Nandini Santoki | 09.11.2020
+     * @param string $media_id media_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_posted_user_details_v1($media_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS p");
+            $this->db->join("users AS u", "p.iUserId = u.iUsersId", "left");
+            
+            $this->db->select("u.iUsersId AS posted_users_id");
+            $this->db->select("u.vDeviceToken AS posted_device_token");
+            $this->db->select("u.eNotificationPref AS posted_notification_pref");
+            $this->db->select("p.iPostId AS p_post_id");
+            if(isset($media_id) && $media_id != ""){ 
+                $this->db->where("p.iPostMediaId =", $media_id);
+            }
+            
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * check_post_media_id method is used to execute database queries for Get Post Media Likes API.
+     * @created Anjaneyulu Gulla | 29.10.2018
+     * @modified Anjaneyulu Gulla | 29.10.2018
+     * @param string $media_id media_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function check_post_media_id($media_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.eStatus AS pm_status");
+            if(isset($media_id) && $media_id != ""){ 
+                $this->db->where("pm.iPostMediaId =", $media_id);
+            }
+            
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * check_post_media_id_v1 method is used to execute database queries for Comment Post Media API.
+     * @created Anjaneyulu Gulla | 29.10.2018
+     * @modified Mehul Prajapati | 18.03.2021
+     * @param string $media_id media_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function check_post_media_id_v1($media_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            $this->db->join("users AS u", "pm.iUserId = u.iUsersId", "left");
+            
+            $this->db->select("pm.eStatus AS pm_status");
+            $this->db->select("pm.iUserId AS post_owner_id");
+            $this->db->select("u.vDeviceToken AS post_owner_device_token");
+            $this->db->select("u.eNotificationPref AS should_notify");
+            if(isset($media_id) && $media_id != ""){ 
+                $this->db->where("pm.iPostMediaId =", $media_id);
+            }
+            
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * check_post_media_id_v2 method is used to execute database queries for Get Post Media Comments API.
+     * @created Anjaneyulu Gulla | 29.10.2018
+     * @modified Anjaneyulu Gulla | 29.10.2018
+     * @param string $media_id media_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function check_post_media_id_v2($media_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.eStatus AS pm_status");
+            if(isset($media_id) && $media_id != ""){ 
+                $this->db->where("pm.iPostMediaId =", $media_id);
+            }
+            
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * update_view_count method is used to execute database queries for Update Media View Count API.
+     * @created Pavan  | 28.11.2018
+     * @modified Vamsi Ippe | 22.05.2019
+     * @param array $params_arr params_arr array to process query block.
+     * @param array $where_arr where_arr are used to process where condition(s).
+     * @return array $return_arr returns response of query block.
+     */
+    public function update_view_count($params_arr = array(), $where_arr = array())
+    {
+        try {
+            $result_arr = array();
+                        
+            
+            
+            if(isset($where_arr["iPostMediaId"]) && $where_arr["iPostMediaId"] != ""){ 
+                $this->db->where("iPostMediaId =", $where_arr["iPostMediaId"]);
+            }
+            
+            
+            $this->db->set($this->db->protect("iViewsCount"), $params_arr["_iviewscount"], FALSE);
+            $res = $this->db->update("post_media");
+            $affected_rows = $this->db->affected_rows();
+            if(!$res || $affected_rows == -1){
+                throw new Exception("Failure in updation.");
+            }
+            $result_param = "affected_rows";
+            $result_arr[0][$result_param] = $affected_rows;
+            $success = 1;
+            
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        $this->db->flush_cache();
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_viral_post_media method is used to execute database queries for Viral Post List API.
+     * @created CIT Dev Team
+     * @modified Rohit Patidar | 18.05.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_post_id_1 p_post_id_1 is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_viral_post_media($user_id = '', $p_post_id_1 = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id_1");
+            $this->db->select("pm.iPostId AS pm_post_id_1");
+            $this->db->select("pm.eMediaType AS pm_media_type_1");
+            $this->db->select("pm.iUserId AS pm_user_id_1");
+            $this->db->select("pm.vUploadFile AS pm_upload_file_1");
+            $this->db->select("pm.dAddedDate AS pm_added_date_1");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail_1");
+            $this->db->select("(".$this->db->escape("").") AS display_image_1", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count_3");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed", FALSE);
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org_1", FALSE);
+            $this->db->select("(pm.vVideoThumbnail) AS pm_video_thumbnail_org_1", FALSE);
+            $this->db->select("((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1)) AS media_like_count", FALSE);
+            $this->db->select("((SELECT count(iPostCommentId) FROM post_comment WHERE iPostId = pm.iPostId AND iParentId = 0 AND eStatus = 'Active' AND iPostMediaId = pm.iPostMediaId)) AS media_comment_count", FALSE);
+            $this->db->select("(SELECT count(iPostMediaLikesId) FROM post_media_likes  pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.iUserId = '".$user_id."' AND pml.eStatus=1) AS is_media_like", FALSE);
+            $this->db->select("pm.vMHeight AS pm_mheight");
+            $this->db->select("pm.vMWidth AS pm_mwidth");
+            if(isset($p_post_id_1) && $p_post_id_1 != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id_1);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            $this->db->order_by("pm.iPostMediaId", "asc");
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_suggestions_media method is used to execute database queries for Suggestions API.
+     * @created CIT Dev Team
+     * @modified Nandini Santoki | 20.10.2020
+     * @param string $p_post_id p_post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_suggestions_media($p_post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.iPostId AS pm_post_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            $this->db->select("(".$this->db->escape("").") AS display_image", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count");
+            if(isset($p_post_id) && $p_post_id != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            $this->db->where_in("pm.eMediaType", array('Image','Video'));
+            
+            $this->db->order_by("pm.iPostMediaId", "desc");
+            
+            
+            $this->db->limit(1);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_viral_plus_media method is used to execute database queries for Viral Plus Media List API.
+     * @created CIT Dev Team
+     * @modified Nandini Santoki | 05.09.2020
+     * @param string $post_id_arr post_id_arr is used to process query block.
+     * @param array $settings_params settings_params are used for paging parameters.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_viral_plus_media($post_id_arr = '', $page_index = 1, &$settings_params = array())
+    {
+        try {
+            $result_arr = array();
+                        
+            $this->db->start_cache();
+            $this->db->from("post_media AS pm");
+            
+            $this->db->where_in("pm.eStatus", array('Active'));
+            if($tmp_arr = filterEmptyValues($post_id_arr)){
+                $old_arr = $post_id_arr;
+                $post_id_arr = $tmp_arr;
+                $this->db->where_in("pm.iPostId", $post_id_arr);
+                $post_id_arr = $old_arr;
+            }
+            
+            $this->db->group_by(array("pm.iPostId"));
+            $this->db->stop_cache();
+            $this->db->select("COUNT(pm.iPostMediaId) AS iPostMediaId", FALSE);
+            $paging_data = $this->db->get();
+            $total_records = is_object($paging_data) ? $paging_data->num_rows() : 0;
+            
+            $this->db->select("pm.iPostId AS pm_post_id");
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.dAddedDate AS pm_added_date");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            $this->db->select("(".$this->db->escape("").") AS display_image", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count");
+            $this->db->select("(COUNT(pm.iPostMediaId)) AS media_count", FALSE);
+
+            $settings_params['count'] = $total_records;
+            
+            $record_limit = 25;
+            $current_page = intval($page_index) > 0 ? intval($page_index) : 1;
+            $total_pages = getTotalPages($total_records, $record_limit);
+            $start_index = getStartIndex($total_records, $current_page, $record_limit);
+            $settings_params['per_page'] = $record_limit;
+            $settings_params['curr_page'] = $current_page;
+            $settings_params['prev_page'] = ($current_page > 1) ? 1 : 0;
+            $settings_params['next_page'] = ($current_page + 1 > $total_pages) ? 0 : 1;
+            
+            $this->db->order_by("pm.iViewsCount", "desc");
+            $this->db->limit($record_limit, $start_index);
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            $this->db->flush_cache();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_post_media_record method is used to execute database queries for Update media post height width API.
+     * @created Rohit Patidar | 09.06.2021
+     * @modified Rohit Patidar | 10.06.2021
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_post_media_record()
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            $this->db->select("(pm.vUploadFile) AS pm_upload_file_org", FALSE);
+            $this->db->select("(pm.vVideoThumbnail) AS pm_video_thumbnail_org", FALSE);
+            $this->db->select("pm.vMHeight AS pm_mheight");
+            $this->db->select("pm.vMWidth AS pm_mwidth");
+            $this->db->where("(pm.vMHeight IS NULL OR pm.vMHeight = '')", FALSE, FALSE);
+            $this->db->where("(pm.vMWidth IS NULL OR pm.vMWidth = '')", FALSE, FALSE);
+            $this->db->where_in("pm.eStatus", array('Active'));
+            $this->db->where("(pm.vUploadFile IS NOT NULL AND pm.vUploadFile <> '')", FALSE, FALSE);
+            
+            $this->db->order_by("pm.iPostMediaId", "desc");
+            
+            
+            $this->db->limit(300);
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+    /**
+     * get_user_post_media1 method is used to execute database queries for Hide post list API.
+     * @created Rohit Patidar | 17.06.2021
+     * @modified Rohit Patidar | 18.06.2021
+     * @param string $user_id user_id is used to process query block.
+     * @param string $p_post_id p_post_id is used to process query block.
+     * @return array $return_arr returns response of query block.
+     */
+    public function get_user_post_media1($user_id = '', $p_post_id = '')
+    {
+        try {
+            $result_arr = array();
+                                
+            $this->db->from("post_media AS pm");
+            
+            $this->db->select("pm.iPostMediaId AS pm_post_media_id");
+            $this->db->select("pm.iPostId AS pm_post_id");
+            $this->db->select("pm.eMediaType AS pm_media_type");
+            $this->db->select("pm.iUserId AS pm_user_id");
+            $this->db->select("pm.vUploadFile AS pm_upload_file");
+            $this->db->select("pm.dAddedDate AS pm_added_date");
+            $this->db->select("pm.vVideoThumbnail AS pm_video_thumbnail");
+            $this->db->select("(".$this->db->escape("").") AS display_image", FALSE);
+            $this->db->select("pm.iViewsCount AS pm_views_count");
+            $this->db->select("(SELECT count(pmv.iPostMediaViewId) FROM post_media_view pmv WHERE pmv.iPostMediaId = pm.iPostMediaId AND pmv.iUserId = '".$user_id."') AS is_viewed", FALSE);
+            $this->db->select("(".$this->db->escape("pm.vUploadFile").") AS pm_upload_file_org", FALSE);
+            $this->db->select("(".$this->db->escape("pm.vVideoThumbnail").") AS pm_video_thumbnail_org", FALSE);
+            $this->db->select("((SELECT COUNT(pml.iPostMediaLikesId) FROM post_media_likes pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.eStatus=1)) AS media_like_count", FALSE);
+            $this->db->select("((SELECT count(iPostCommentId) FROM post_comment WHERE iPostId = pm.iPostId AND iParentId = 0 AND eStatus = 'Active' AND iPostMediaId = pm.iPostMediaId)) AS media_comment_count", FALSE);
+            $this->db->select("(SELECT count(iPostMediaLikesId) FROM post_media_likes  pml WHERE pml.iPostMediaId = pm.iPostMediaId AND pml.iUserId = '".$user_id."') AS is_media_like", FALSE);
+            $this->db->select("pm.vMHeight AS pm_mheight");
+            $this->db->select("pm.vMWidth AS pm_mwidth");
+            if(isset($p_post_id) && $p_post_id != ""){ 
+                $this->db->where("pm.iPostId =", $p_post_id);
+            }
+            $this->db->where_in("pm.eStatus", array('Active'));
+            
+            
+            
+            $result_obj = $this->db->get();
+            $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
+            
+            if(!is_array($result_arr) || count($result_arr) == 0){
+                throw new Exception('No records found.');
+            }
+            $success = 1;
+        } catch (Exception $e) {
+            $success = 0;
+            $message = $e->getMessage();
+        }
+        
+        $this->db->_reset_all();
+        //echo $this->db->last_query();
+        $return_arr["success"] = $success;
+        $return_arr["message"] = $message;
+        $return_arr["data"] = $result_arr;
+        return $return_arr;
+    }
+    
+    
+}

@@ -1,0 +1,224 @@
+<%section name=i loop=$posts%>
+    <%if $posts[i]['post_type'] eq 'Share'%>
+        <div class="video-dash-post mb-20">
+                <div class="video-dash-post-heading">
+                  <div class="video-dash-post-user">
+                    <div class="video-dash-post-img">
+                      <img src="images/user.png" alt="">
+                    </div>
+                    <div class="video-post-content">
+                      <h5>Jenny John</h5>
+                      <p>12 hrs ago</p>
+                    </div>
+                  </div>
+                  <div class="video-post-icon">
+                    <a href="#">
+                      <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </a>
+                  </div>
+                </div>
+                <div class="video-post-content">
+                  <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.</p>
+                </div>
+                <div class="video-post-vid">
+                  <div class="video-wrapper">
+                    <p class="view"><i class="fa-regular fa-eye"></i> 12</p>
+                    <div class="video-container-2" id="video-container">
+                      <video controls="" id="video" preload="metadata" poster="images/video-img.png">
+                        <source src="video/video-1.mp4" type="video/mp4">
+                      </video>
+
+                      <div class="play-button-wrapper">
+                        <div title="Play video" class="play-gif" id="circle-play-b">
+                          <!-- SVG Play Button -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="video-share-box-wrapper">
+                  <div class="video-share-box">
+                    <ul>
+                      <li class="heart"><i class="fa-solid fa-heart"></i></li>
+                      <li class="video-comment">
+                        <a href="#">
+                          <i class="fa-regular fa-comment-dots"></i>
+                          <p>324</p>
+                        </a>
+                      </li>
+                      <li class="video-comment">
+                        <a href="#">
+                          <i class="fa-solid fa-share"></i>
+                          <p>324</p>
+                        </a>
+                      </li>
+                      <li>
+                        <div class="video-info-box">
+                          <i class="fa-solid fa-info"></i>
+                          <p>2025</p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="video-photo">
+                    <a href="#">
+                      <i class="fa-regular fa-images"></i>
+                    </a>
+                    <div class="my-progress-bar">
+                      <p>48</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="comment">
+                    <div class="comment-pic">
+                      <img src="images/comment.png" alt="">
+                    </div>
+                    <div class="comment-text comment-text-new">
+                      <form>
+                        <div class="form-group">
+                          <input type="email" class="form-control" id="comment-box8" aria-describedby="emailHelp" placeholder="Add a Comment">
+                        </div>
+                        <button type="submit" class="btn btn-primary form-btn"><img src="images/plane.png"></button>
+                      </form>
+                    </div>
+                  </div>
+              </div>
+    <%else%>
+        <div class="video-dash-post mb-20">
+                <div class="video-dash-post-heading">
+                  <div class="video-dash-post-user">
+                    <div class="video-dash-post-img">
+                      <img src="images/user.png" alt="">
+                    </div>
+                    <div class="video-post-content">
+                      <h5>Jenny John</h5>
+                      <p>12 hrs ago</p>
+                    </div>
+                  </div>
+                  <div class="video-post-icon">
+                    <a href="#">
+                      <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </a>
+                  </div>
+                </div>
+                <div class="video-post-content">
+                  <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.</p>
+                </div>
+                <div class="video-post-vid">
+                  <div class="video-wrapper">
+                    <p class="view"><i class="fa-regular fa-eye"></i> 12</p>
+                    <div class="video-container-2" id="video-container">
+                      <video controls="" id="video" preload="metadata" poster="images/video-img.png">
+                        <source src="video/video-1.mp4" type="video/mp4">
+                      </video>
+
+                      <div class="play-button-wrapper">
+                        <div title="Play video" class="play-gif" id="circle-play-b">
+                          <!-- SVG Play Button -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="video-share-box-wrapper">
+                  <div class="video-share-box">
+                    <ul>
+                      <li class="heart"><i class="fa-solid fa-heart"></i></li>
+                      <li class="video-comment">
+                        <a href="#">
+                          <i class="fa-regular fa-comment-dots"></i>
+                          <p>324</p>
+                        </a>
+                      </li>
+                      <li class="video-comment">
+                        <a href="#">
+                          <i class="fa-solid fa-share"></i>
+                          <p>324</p>
+                        </a>
+                      </li>
+                      <li>
+                        <div class="video-info-box">
+                          <i class="fa-solid fa-info"></i>
+                          <p>2025</p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="video-photo">
+                    <a href="#">
+                      <i class="fa-regular fa-images"></i>
+                    </a>
+                    <div class="my-progress-bar">
+                      <p>48</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="comment">
+                    <div class="comment-pic">
+                      <img src="images/comment.png" alt="">
+                    </div>
+                    <div class="comment-text comment-text-new">
+                      <form>
+                        <div class="form-group">
+                          <input type="email" class="form-control" id="comment-box8" aria-describedby="emailHelp" placeholder="Add a Comment">
+                        </div>
+                        <button type="submit" class="btn btn-primary form-btn"><img src="images/plane.png"></button>
+                      </form>
+                    </div>
+                  </div>
+              </div>
+    <%/if%>
+<%sectionelse%>
+    <p class="no_posts" style="text-align: center;padding: 20px;font-size: 15px;">No posts available</p>
+<%/section%>
+<div class="modal fade cmn-modal create-post-modal" id="reportPost" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="new_loader" style="display:none;"></div>
+            <div class="modal-header">
+                <h5 class="modal-title text-center" id="exampleModalLabel">Report Post</h5>
+            </div>
+            <form class="cmn-form" id="form_report" method='post'>
+                <input type="hidden" name="report_post_id" id="report_post_id" value=""/>
+                <div class="modal-body">
+                    <div class="form-group input-group col-4">
+                        <select class="form-control" id="eReprtType" name="eReprtType">
+                            <option value="Spam">Spam</option>
+                            <option value="InAppropriate">In Appropriate</option>
+                        </select>
+                    </div>
+                    <div class="upload-text">
+                        <textarea name="report_notes" id="report_notes" class="form-control" rows="5" placeholder="Notes (optional)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="submit_report_post" class="btn btn-primary">Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade cmn-modal create-post-modal" id="sharePost" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="new_loader" style="display:none;"></div>
+            <div class="modal-header">
+                <h5 class="modal-title text-center" id="exampleModalLabel">Share This Post</h5>
+            </div>
+            <form id="form_share" method='post'>
+                <input type="hidden" name="share_post_id" id="share_post_id" value=""/>
+                <div class="modal-body">
+                    <div class="upload-text">
+                        <i class="cmn-user-img">
+                            <img src="<%$userinfo.u_profile_image%>" alt="">
+                        </i>
+                        <textarea name="share_post_text" id="share_post_text" class="form-control" rows="5" placeholder="What’s on your mind?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="share_timeline" class="btn btn-primary">Share on My Timeline</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

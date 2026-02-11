@@ -1,0 +1,73 @@
+@font-face {
+    font-family: 'Museo Sans';
+
+    src: url('../../fonts/front/museosans/MuseoSans-300.eot');
+    src: url('../../fonts/front/museosans/MuseoSans-300.eot?#iefix') format('embedded-opentype'),
+        url('../../fonts/front/museosans/MuseoSans-300.woff2') format('woff2'),
+        url('../../fonts/front/museosans/MuseoSans-300.woff') format('woff'),
+        url('../../fonts/front/museosans/MuseoSans-300.ttf') format('truetype'),
+        url('../../fonts/front/museosans/MuseoSans-300.svg#MuseoSans-300') format('svg');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Museo Sans';
+
+    src: url('../../fonts/front/museosans/MuseoSans-500.eot');
+    src: url('../../fonts/front/museosans/MuseoSans-500.eot?#iefix') format('embedded-opentype'),
+        url('../../fonts/front/museosans/MuseoSans-500.woff2') format('woff2'),
+        url('../../fonts/front/museosans/MuseoSans-500.woff') format('woff'),
+        url('../../fonts/front/museosans/MuseoSans-500.ttf') format('truetype'),
+        url('../../fonts/front/museosans/MuseoSans-500.svg#MuseoSans-500') format('svg');
+
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Museo Sans';
+    src: url('../../fonts/front/museosans/MuseoSans-700.eot');
+    src: url('../../fonts/front/museosans/MuseoSans-700.eot?#iefix') format('embedded-opentype'),
+        url('../../fonts/front/museosans/MuseoSans-700.woff2') format('woff2'),
+        url('../../fonts/front/museosans/MuseoSans-700.woff') format('woff'),
+        url('../../fonts/front/museosans/MuseoSans-700.ttf') format('truetype'),
+        url('../../fonts/front/museosans/MuseoSans-700.svg#MuseoSans-700') format('svg');
+
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Museo Sans';
+
+    src: url('../../fonts/front/museosans/MuseoSans-900.eot');
+    src: url('../../fonts/front/museosans/MuseoSans-900.eot?#iefix') format('embedded-opentype'),
+        url('../../fonts/front/museosans/MuseoSans-900.woff2') format('woff2'),
+        url('../../fonts/front/museosans/MuseoSans-900.woff') format('woff'),
+        url('../../fonts/front/museosans/MuseoSans-900.ttf') format('truetype'),
+        url('../../fonts/front/museosans/MuseoSans-900.svg#MuseoSans-900') format('svg');
+
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+
+@font-face {
+    font-family: 'Futura Md BT';
+
+    src: url('../../fonts/front/futuraBT/FuturaBT-Medium.eot');
+    src: url('../../fonts/front/futuraBT/FuturaBT-Medium.eot?#iefix') format('embedded-opentype'),
+        url('../../fonts/front/futuraBT/FuturaBT-Medium.woff2') format('woff2'),
+        url('../../fonts/front/futuraBT/FuturaBT-Medium.woff') format('woff'),
+        url('../../fonts/front/futuraBT/FuturaBT-Medium.ttf') format('truetype'),
+        url('../../fonts/front/futuraBT/FuturaBT-Medium.svg#FuturaBT-Medium') format('svg');
+
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}

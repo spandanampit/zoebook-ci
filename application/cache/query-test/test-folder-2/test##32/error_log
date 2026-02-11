@@ -1,0 +1,4 @@
+[19-Mar-2025 13:32:08 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function add_action() in /home/toyosupport/dev-demowp.toyosupport.ca/wp-content/themes/promo-materials/functions.php:105
+Stack trace:
+#0 {main}
+  thrown in /home/toyosupport/dev-demowp.toyosupport.ca/wp-content/themes/promo-materials/functions.php on line 105

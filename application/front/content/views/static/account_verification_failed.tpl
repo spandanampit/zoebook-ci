@@ -1,0 +1,1 @@
+<p style="text-align: center;"><strong>Account Verification Failed!</strong></p>

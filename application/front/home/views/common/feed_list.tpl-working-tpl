@@ -1,0 +1,368 @@
+<%section name=i loop=$posts%>
+    <%if $posts[i]['post_type'] eq 'Share'%>
+        <%assign var=posttext_without_emoji value=$this->general->linkify($posts[i]['post_text_emoji'])%>
+        <%assign var=meta_posttext_without_emoji value=$this->general->linkify($posts[i]['post_metadata']['text'])%>
+        <div class="video-dash-post mb-20" id="feed_id_<%$posts[i]['post_id']%>">
+            <div class="video-dash-post-heading">
+                <div class="video-dash-post-user">
+                <div class="video-dash-post-img">
+                    <img src="<%$posts[i]['user_profile_image']%>" alt="">
+                </div>
+                <div class="video-post-content">
+                    <h5><%$posts[i]['user_name']%></h5>
+                    <p title="<%$posts[i]['added_date']%>">
+                        <%*time_elapsed_string($posts[i]['added_date'])*%>
+                        <%$this->general->getLocalDateTime($posts[i]['added_date'], "x j, Y- g:i A")%>
+                    </p>
+                </div>
+                </div>
+                <div class="video-post-icon">
+                <a href="#">
+                   <i class="fa fa-ellipsis-v"></i>
+                </a>
+                </div>
+            </div>
+            <div class="video-post-content">
+                <a href="<%$this->general->setdiplayposturl($posts[i]['post_id'],$posts[i]['post_text_emoji'])%>">
+                    <p><%$this->general->displayposttext(removeEmoji($posttext_without_emoji))%></p>
+                </a>
+            </div>
+            <div class="video-post-vid">
+                <div class="video-wrapper">
+                <p class="view"><i class="fa-regular fa-eye"></i> 122dfgrbbrgff </p>
+                <%if $posts[i]['get_actual_post']['p_post_type'] eq 'Media' or $posts[i]['get_actual_post']['p_post_type'] eq 'Live'%>
+                    <%if $posts[i]['get_actual_post']['p_post_type'] eq 'Media' or $posts[i]['get_actual_post']['p_post_type'] eq 'Live'%>
+                        <%assign var=post_media value=$posts[i]['get_actual_post_media']%>
+                        <%section name=j loop=$post_media%>
+                            <div class="video-container-2 owl-carousel owl-theme media-slider media_slider" data-getmediaid="<%$post_media[j]['pm_post_media_id']%>" data-getpostid="<%$post_media[j]['pm_post_id']%>" id="video-container">
+                                <%if $post_media[j]['pm_media_type'] eq 'Image'%>
+                                    <a href="<%$this->general->setdiplayposturl($posts[i]['post_id'],$posts[i]['post_text_emoji'])%>"><img src="<%$post_media[j]['upload_file_org']%>" alt=""></a>
+                                <%elseif $post_media[j]['pm_media_type'] eq 'Video'%>
+                                    <video controls="" id="plyr-video" class="playerembed" preload="metadata" width="100%" height="100%" controls data-poster="<%$post_media[j]['video_thumbnail_org']%>" controlsList="nodownload">
+                                    <source src="<%$post_media[j]['pm_upload_file']%>" type="video/mp4">
+                                    </video>
+                                <%/if%>
+                                <div class="play-button-wrapper">
+                                <div title="Play video" class="play-gif" id="circle-play-b">
+                                    <!-- SVG Play Button -->
+                                </div>
+                                </div>
+                            </div>
+                        <%/section%>
+                    <%/if%>
+                <%/if%>
+                </div>
+            </div>
+            <div class="video-share-box-wrapper">
+                <div class="video-share-box" id="feed_action_<%$posts[i]['post_id']%>">
+                <ul>
+                    <%include file="common/feed_actions.tpl"%>
+                    <li>
+                    <div class="video-info-box">
+                        <i class="fa-solid fa-info"></i>
+                        <p>2025</p>
+                    </div>
+                    </li>
+                </ul>
+                </div>
+                <div class="video-photo">
+                <a href="#">
+                    <i class="fa-regular fa-images"></i>
+                </a>
+                <div class="my-progress-bar">
+                    <p>569821654+4</p>
+                </div>
+                </div>
+            </div>
+            <div class="comment">
+                <div class="comment-pic">
+                    <img src="images/comment.png" alt="">
+                </div>
+                <div class="comment-text comment-text-new">
+                    <form>
+                    <div class="form-group">
+                        <textarea class="form-control comment_post comment_post_<%$posts[i]['post_id']%>" id="comment-box9"  data-postid="<%$posts[i]['post_id']%>" rows="1" placeholder="Add Comment" data-emojiable="true"></textarea>
+                        <input type="hidden" name="post_comment_emoji" id="post_comment_emoji">
+                    </div>
+                    <button type="submit" class="btn btn-primary form-btn" data-postid="<%$posts[i]['post_id']%>" title="Add Comment"><img src=""></button>
+                    </form>
+                </div>
+                </div>
+            </div>
+    <%else%>
+    <%assign var=posttext_without_emoji value=$this->general->linkify($posts[i]['post_text_emoji'])%>
+    <%assign var=meta_posttext_without_emoji value=$this->general->linkify($posts[i]['post_metadata']['text'])%>
+        <div class="video-dash-post mb-20" id="feed_id_<%$posts[i]['post_id']%>">
+                <div class="video-dash-post-heading">
+                  <div class="video-dash-post-user">
+                    <div class="video-dash-post-img">
+                      <img src="<%$posts[i]['user_profile_image']%>" alt="">
+                    </div>
+                    <div class="video-post-content">
+                      <h5><%$posts[i]['user_name']%></h5>
+                      <p title="<%$posts[i]['added_date']%>">
+                            <%*time_elapsed_string($posts[i]['added_date'])*%>
+                            <%$this->general->getLocalDateTime($posts[i]['added_date'], "M j, Y- g:i A")%>
+                      </p>
+                    </div>
+                  </div>
+                  <div class="video-post-icon">
+                    <button class="btn" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <i class="fa fa-ellipsis-h"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+                        <%if $posts_pgtype eq 'my_profile' || $posts[i]['posted_user_id'] eq $this->session->userdata('iUserId')%>
+                            <a class="dropdown-item edit_post" data-postid="<%$posts[i]['post_id']%>" href="javascript://">Edit</a>
+                            <a class="dropdown-item delete_post" data-postid="<%$posts[i]['post_id']%>" href="javascript://">Delete</a>
+                        <%else%>
+                            <a class="dropdown-item report_post" data-report_type="Spam" data-postid="<%$posts[i]['post_id']%>" href="javascript://">Spam</a>
+                            <a class="dropdown-item report_post" data-report_type="InAppropriate" data-postid="<%$posts[i]['post_id']%>" href="javascript://">Inappropriate ?</a>
+                            <a class="dropdown-item block_user" data-userid="<%$posts[i]['posted_user_id']%>" href="javascript://">Block</a>
+                            <a class="dropdown-item hide_post" data-postid="<%$posts[i]['post_id']%>" href="javascript://">Hide Post</a>
+                        <%/if%>
+                    </div>
+                  </div>
+                </div>
+                <%if $posts[i]['post_metadata']['link'] neq ''%>
+                    <div class="video-post-content">
+                        <a href="<%$this->general->setdiplayposturl($posts[i]['post_id'],$posts[i]['post_text_emoji'])%>">
+                            <p><%$this->general->displayposttext($posts[i]['post_text_emoji'])%></p><br>
+                        </a>
+                        <%if $posts[i]['post_metadata']['title'] neq ''%>
+                            <p><%$posts[i]['post_metadata']['title']|nl2br%></p>
+                        <%/if%>
+                    </div>
+                    <%assign var=post_media value=$posts[i]['get_actual_post_media']%>
+                    <div class="video-post-vid">
+                        <div class="video-wrapper">
+                            <p class="view"><i class="fa-regular fa-eye"></i> 1222222</p>
+                            <%if $posts[i]['post_metadata']['image'] neq ''%>
+                                <%if strpos($posts[i]['post_metadata']['link'],'http')=== false%>
+                                    <%assign var='protocol' value='http://'%>
+                                <%else%>
+                                    <%assign var='protocol' value=''%>
+                                <%/if%>
+                                <div class="video-container-2" id="video-container">
+                                    <img src="<%$posts[i]['post_metadata']['image']%>">
+                                    <div class="play-button-wrapper">
+                                        <div title="Play video" class="play-gif" id="circle-play-b">
+                                        <!-- SVG Play Button -->
+                                        </div>
+                                    </div>
+                                </div>
+                            <%/if%><%*$this->general->setdiplayposturl($posts[i]['post_id'],$posts[i]['post_metadata']['text'])*%>
+                        </div>
+                    </div>
+                <%else%>
+                    <%*$posts[i]|pr*%>
+                    <%if $posts[i]['post_type'] eq 'LiveNow' AND in_array(strtolower($posts[i]['ts_archive_status']),array('started','paused')) !== false %>
+                        <div class="video-post-content">
+                            <a href="<%$this->general->setdiplayliveposturl($posts[i]['post_id'])%>">
+                                <p><%$this->general->displayposttext(removeEmoji($posttext_without_emoji))%></p><br>
+                            </a>
+                        </div>
+                        <div class="video-post-vid">
+                            <div class="video-wrapper">
+                                <p class="view"><i class="fa-regular fa-eye"></i> 12</p>
+                                    <%assign var="live_thumb_path" value=$this->config->item('live_thumb_path')|@cat:"screenshot_"|@cat:$posts[i]['post_id']|@cat:".jpeg"%>
+                                    <%assign var="live_thumb_url" value=$this->config->item('live_thumb_url')|@cat:"screenshot_"|@cat:$posts[i]['post_id']|@cat:".jpeg"%>
+                                    <%if $live_thumb_path|@file_exists%>
+                                        <div class="video-container-2" id="video-container">
+                                            <img src="<%$live_thumb_url%>">
+                                            <div class="play-button-wrapper">
+                                                <div title="Play video" class="play-gif" id="circle-play-b">
+                                                <!-- SVG Play Button -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <%/if%>
+                                <%*$this->general->setdiplayposturl($posts[i]['post_id'],$posts[i]['post_metadata']['text'])*%>
+                            </div>
+                        </div>
+                    <%elseif ($posts[i]['post_type'] eq 'LiveNow' OR $posts[i]['post_type'] eq 'Live' ) AND in_array(strtolower($posts[i]['ts_archive_status']),array('stopped','uploaded')) !==false %>
+                         <div class="video-post-content">
+                            <p><%$this->general->displayposttext($posts[i]['post_text_emoji'])%></p><br>
+                        </div>
+                        <div class="video-post-vid">
+                            <div class="video-wrapper">
+                                <p class="view"><i class="fa-regular fa-eye"></i> 12</p>
+                                    <%assign var="live_thumb_path" value=$this->config->item('live_thumb_path')|@cat:"screenshot_"|@cat:$posts[i]['post_id']|@cat:".jpeg"%>
+                                    <%assign var="live_thumb_url" value=$this->config->item('live_thumb_url')|@cat:"screenshot_"|@cat:$posts[i]['post_id']|@cat:".jpeg"%>
+                                <%if $live_thumb_path|@file_exists%>
+                                    <%*$this->general->get_archive_video($posts[i]['ts_archive_id'])*%>
+                                    <%if $this->general->get_archive_video($posts[i]['ts_archive_id']) !==false %>
+                                        <div class="video-container-2" id="video-container">
+                                            <video controls="" id="video" preload="metadata" width="100%" height="100%" poster="<%$live_thumb_url%>">
+                                                <source src="<%$posts[i]['live_video_url']%>" type="video/mp4">
+                                            </video>
+                                            <%*$this->general->get_archive_video($posts[i]['ts_archive_id'])*%>
+                                            <div class="play-button-wrapper">
+                                                <div title="Play video" class="play-gif" id="circle-play-b">
+                                                <!-- SVG Play Button -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <%/if%>
+                                <%/if%>
+                            </div>
+                        </div>
+                    <%else%>
+                        <div class="video-post-content">
+                            <a href="<%$this->general->setdiplayposturl($posts[i]['post_id'],$posts[i]['post_text_emoji'])%>">
+                                <p ><%$this->general->displayposttext(removeEmoji($posttext_without_emoji))%></p>  
+                            </a>
+                        </div>
+                        <div class="video-post-vid">
+                            <%if $posts[i]['post_type'] eq 'Media'%> 
+                                <%if $posts[i]['post_type'] eq 'Media' or $posts[i]['post_type'] eq 'Live'%>
+                                    <%assign var=post_media value=$posts[i]['get_post_media']%>
+                                    <div class="video-wrapper owl-carousel owl-theme media-slider media_slider carousel<%$posts[i]['post_id']%>">
+                                        <%*$this->general->get_archive_video($posts[i]['ts_archive_id'])*%>
+                                        <%section name=j loop=$post_media%>
+                                            <div class="video-container-2" id="video-container" data-getmediaid="<%$post_media[j]['pm_post_media_id']%>" data-getpostid="<%$post_media[j]['post_id']%>">
+                                                <%if $post_media[j]['pm_media_type'] eq 'Image'%>
+                                                    <%if $post_media[j]['upload_file_orgh'] neq ''%>
+                                                        <a href="<%$this->general->setdiplayposturl($posts[i]['post_id'],$posts[i]['post_text_emoji'])%>"><img src="<%$post_media[j]['upload_file_org']%>" alt=""></a>
+                                                    <%else%>
+                                                        <img src="<%$post_media[j]['display_image']%>" alt="">
+                                                    <%/if%>
+                                                <%elseif $post_media[j]['pm_media_type'] eq 'Video'%>
+                                                    <video id="plyr-video" class="playerembed" width="100%" height="100%" preload="metadata" controls data-poster="<%$post_media[j]['video_thumbnail_org']%>">
+                                                        <%assign var="video_url" value=$post_media[j]['pm_video_thumbnail']%>
+                                                        <%if $is_detail eq "Yes"%>
+                                                            <%assign var="video_url" value=$post_media[j]['pm_video_thumbnail']%>
+                                                        <%/if%>
+                                                        <source src="<%$video_url%>" type="video/mp4">
+                                                    </video>
+                                                <%/if%>
+                                            </div>
+                                        <%/section%>
+                                    </div>
+                                <%/if%>
+                            <%/if%>    
+                        </div>
+                    <%/if%>
+                <%/if%>
+                <div class="video-share-box-wrapper">
+                  <div class="video-share-box" id="feed_action_<%$posts[i]['post_id']%>" >
+                    <ul>
+                        <%include file="common/feed_actions.tpl"%>
+                      <li>
+                        <div class="video-info-box">
+                          <i class="fa fa-info"></i>
+                          <p>2025</p>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="video-photo">
+                    <a href="#">
+                      <i class="fa-regular fa-images"></i>
+                    </a>
+                    <div class="my-progress-bar">
+                      <p>48</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="comment">
+                    <div class="cmnt-pic">
+                        <img src="<%$posts[i]['user_profile_image']%>" alt="">
+                    </div>
+                    <div class="post-add-comment add-comments">                    
+                        <div class="comment-text comment-text-new"style="padding-top: 11px !important;">
+                            <form style="display: flex; height: 53px">
+                                <div class="form-group">
+                                <textarea class="form-control comment_post_<%$posts[i]['post_id']%>" id="comment-box8" aria-describedby="emailHelp" data-postid="<%$posts[i]['post_id']%>" rows="1" placeholder="Add Comment" data-emojiable="true" style="color:gray"></textarea>
+                                </div>
+                                <div class="upload_media_div" id="media_div_<%$posts[i]['post_id']%>" style="display: none;">
+                                    <input type="file" name="upload_file" id="input_media_<%$posts[i]['post_id']%>">
+                                </div>
+                                <div class="comment-pic" style="display: flex; background: none">
+                                    <span style="cursor: pointer" class="btn_post_media_attach">
+                                        <i class="fa fa-paperclip btn_postmedia" data-postid="142251"></i>
+                                    </span>
+                                    <span style="cursor:pointer;" class="open_gif_section" data-gif-post-id="<%$posts[i]['post_id']%>">GIF</span>
+                                    <span style="cursor:pointer; " class="open_sticker_section" data-sticker-post-id="<%$posts[i]['post_id']%>">
+                                        <img  src="<%$this->config->item('images_url')%>front/new-front-image/sticker.png" alt="">
+                                    </span>
+                                </div>
+                                <input type="hidden" name="post_comment_emoji" id="post_comment_emoji">
+                               <i class="fas fa-paper-plane btn_postcomment form-btn" style="cursor:pointer; color: white !important" data-postid="<%$posts[i]['post_id']%>" title="Add Comment"></i>
+                            </form><br>
+                            <div class="feed-comments feed_comments_<%$posts[i]['post_id']%> scrollbarContent feed-comments-main" style="display:none;">
+                                <ul id="comments_list_<%$posts[i]['post_id']%>">
+                                    <%include file="common/comments.tpl" comments=$posts[i]['statistics']['comments']%>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- GIF Section -->
+                       <div class="main_gif_div_section gif_section_<%$posts[i]['post_id']%>" style="display: none;">
+                            <input type="text" id="searchInput_<%$posts[i]['post_id']%>" placeholder="Search for Stickers">
+                            <a href="javascript:void(0);" class="close_gif_div_<%$posts[i]['post_id']%>" >
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                            </a>
+                            <div class="gif_picker_div_cls" id="gifPicker_<%$posts[i]['post_id']%>">
+                                <img src="https://media1.giphy.com/media/9ywJxa5PASF6HBUSh7/giphy-downsized-medium.gif?cid=ca8ff4c416a6m7a5omqz1thbb97qwfygjzj2z51qo93v43oa&ep=v1_stickers_search&rid=giphy-downsized-medium.gif&ct=s" alt="">
+                            </div>    
+                        </div>
+                  </div>
+                </div>
+    <%/if%>
+<%sectionelse%>
+    <p class="no_posts" style="text-align: center;padding: 20px;font-size: 15px;">No posts available</p>
+<%/section%>
+
+
+<div class="modal fade cmn-modal create-post-modal" id="reportPost" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="new_loader" style="display:none;"></div>
+            <div class="modal-header">
+                <h5 class="modal-title text-center" id="exampleModalLabel">Report Post</h5>
+            </div>
+            <form class="cmn-form" id="form_report" method='post'>
+                <input type="hidden" name="report_post_id" id="report_post_id" value=""/>
+                <div class="modal-body">
+                    <div class="form-group input-group col-4">
+                        <select class="form-control" id="eReprtType" name="eReprtType">
+                            <option value="Spam">Spam</option>
+                            <option value="InAppropriate">In Appropriate</option>
+                        </select>
+                    </div>
+                    <div class="upload-text">
+                        <textarea name="report_notes" id="report_notes" class="form-control" rows="5" placeholder="Notes (optional)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="submit_report_post" class="btn btn-primary">Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade cmn-modal create-post-modal" id="sharePost" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="new_loader" style="display:none;"></div>
+            <div class="modal-header">
+                <h5 class="modal-title text-center" id="exampleModalLabel">Share This Post</h5>
+            </div>
+            <form id="form_share" method='post'>
+                <input type="hidden" name="share_post_id" id="share_post_id" value=""/>
+                <div class="modal-body">
+                    <div class="upload-text">
+                        <i class="cmn-user-img">
+                            <img src="<%$userinfo.u_profile_image%>" alt="">
+                        </i>
+                        <textarea name="share_post_text" id="share_post_text" class="form-control" rows="5" placeholder="What’s on your mind?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="share_timeline" class="btn btn-primary">Share on My Timeline</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

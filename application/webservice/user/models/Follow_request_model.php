@@ -1,0 +1,35 @@
+<?php
+defined('BASEPATH') || exit('No direct script access allowed');
+
+/**
+ * Description of Follow Request Model
+ *
+ * @category webservice
+ *
+ * @package user
+ *
+ * @subpackage models
+ *
+ * @module Follow Request
+ *
+ * @class Follow_request_model.php
+ *
+ * @path application\webservice\user\models\Follow_request_model.php
+ *
+ * @version 4.3
+ *
+ * @author CIT Dev Team
+ *
+ * @since 05.10.2021
+ */
+
+class Follow_request_model extends CI_Model
+{
+    /**
+     * __construct method is used to set model preferences while model object initialization.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
+}
