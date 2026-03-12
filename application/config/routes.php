@@ -274,6 +274,11 @@ $route['PS/classes/([a-zA-Z0-9_]+)'] = "classes/classes/classes/$1"; //GET-POST
 $route['PS/classes/([a-zA-Z0-9_]+)/([a-zA-Z0-9]+)'] = "classes/classes/class/$1/$2"; //GET-PUT-DELETE
 
 
+//Test
+$route['popularmovementvtwo'] = 'movement/movement/popularmovementvtwo';
+
+//new created route react
+$route['reactMovement'] = 'movement/movement/reactMovement';
 
 
 //$route['content/(:any)'] = "content/content/staticpage/$1";

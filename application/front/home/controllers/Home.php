@@ -2965,46 +2965,46 @@ class Home extends Cit_Controller
             echo json_encode(['status' => 'success']);
       }
 
-      public function add_comment()
-      {
+        public function add_comment()
+        {
             $user_id = $this->session->userdata('iUserId');
             $postId = $this->input->post('comment_post_id');
             $comment = $this->input->post('comment');
             $post_media_id = $this->input->post('post_media_id') ?? 0;
 
             if (empty($comment)) {
-                  $response = [
-                  'status' => 'error',
-                  'message' => 'content required'
-                  ];
-                  echo json_encode($response);
-                  exit;
+                $response = [
+                    'status' => 'error',
+                    'message' => 'content required'
+                ];
+                echo json_encode($response);
+                exit;
             }
 
             $params = [
-                  'comment' => $comment,
-                  'post_id' => $postId,
-                  'user_id' => $user_id,
-                  'post_media_id' => $post_media_id
+                'comment' => $comment,
+                'post_id' => $postId,
+                'user_id' => $user_id,
+                'post_media_id' => $post_media_id
             ];
             $playlistComment = $this->cit_api_model->callAPI("comment_on_post", $params);
             if ($playlistComment) {
-                  $response = [
-                  'status' => 'success',
-                  "user_id" => $user_id,
-                  "comment" => $comment,
-                  "post_id" => $postId,
-                  ];
+                $response = [
+                    'status' => 'success',
+                    "user_id" => $user_id,
+                    "comment" => $comment,
+                    "post_id" => $postId,
+                ];
             } else {
-                  $response = [
-                  'status' => 'error',
-                  "user_id" => $user_id,
-                  "comment" => $comment,
-                  "post_id" => $postId,
-                  ];
+                $response = [
+                    'status' => 'error',
+                    "user_id" => $user_id,
+                    "comment" => $comment,
+                    "post_id" => $postId,
+                ];
             }
             echo json_encode($response);
-      }
+        }
 
 
       public function viral_post_scrolled_posts($param = array())

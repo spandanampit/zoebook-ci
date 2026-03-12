@@ -439,158 +439,154 @@ Project.modules.posts = {
 
             var other_data = $("#post_data").serializeArray();
             $.each(other_data, function (key, input) {
-                    if (input.name == "post_text") {
-                        formData.append(
-                                input.name,
-                                $("#post_text").siblings(".emoji-wysiwyg-editor").html()
-                        );
-                    } else if (input.name == "post_text_emoji") {
-                        var emojidata = $("#post_text").val();
-                        formData.append(input.name, emojidata);
-                    } else {
-                        formData.append(input.name, input.value);
-                    }
+                if (input.name == "post_text") {
+                    formData.append(
+                        input.name,
+                        $("#post_text").siblings(".emoji-wysiwyg-editor").html()
+                    );
+                } else if (input.name == "post_text_emoji") {
+                    var emojidata = $("#post_text").val();
+                    formData.append(input.name, emojidata);
+                } else {
+                    formData.append(input.name, input.value);
+                }
             });
 
             var owl;
             $.ajax({
-                    url: site_url + "home/add_post",
-                    type: "POST",
-                    data: formData,
-                    enctype: "multipart/form-data",
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                        // $(".new_loader").show();
-                        showLoader();
-                    },
-                    success: function (response) {
-                        Project.modules.posts.tmp_files = [];
+                url: site_url + "home/add_post",
+                type: "POST",
+                data: formData,
+                enctype: "multipart/form-data",
+                cache: false,
+                contentType: false,
+                processData: false,
+                dataType: "json",
+                beforeSend: function (xhr) {
+                    // $(".new_loader").show();
+                    showLoader();
+                },
+                success: function (response) {
+                    Project.modules.posts.tmp_files = [];
 
-                        $(function () {
-                                // Initializes and creates emoji set from sprite sheet
-                                window.emojiPicker = new EmojiPicker({
-                                    emojiable_selector: "[data-emojiable=true]",
-                                    assetsPath:
-                                            site_url + "public/styles/libraries/emoji_picker/img", //'http://onesignal.github.io/emoji-picker/lib/img/',
-                                    popupButtonClasses: "fa fa-smile-o",
-                                });
+                    $(function () {
+                            // Initializes and creates emoji set from sprite sheet
+                            window.emojiPicker = new EmojiPicker({
+                                emojiable_selector: "[data-emojiable=true]",
+                                assetsPath:
+                                        site_url + "public/styles/libraries/emoji_picker/img", //'http://onesignal.github.io/emoji-picker/lib/img/',
+                                popupButtonClasses: "fa fa-smile-o",
+                            });
 
-                                // Finds all elements with `emojiable_selector` and converts them to rich emoji input fields
-                                // You may want to delay this step if you have dynamically created input fields that appear later in the loading process
-                                // It can be called as many times as necessary; previously converted input fields will not be converted again
-                                window.emojiPicker.discover();
-                        });
+                            // Finds all elements with `emojiable_selector` and converts them to rich emoji input fields
+                            // You may want to delay this step if you have dynamically created input fields that appear later in the loading process
+                            // It can be called as many times as necessary; previously converted input fields will not be converted again
+                            window.emojiPicker.discover();
+                    });
 
-                        if (response.status == "Success") {
-                                if (
-                                    (posttype.toLowerCase() == "viral" &&
-                                            pagetype.toLowerCase() != "viral") ||
-                                    (posttype.toLowerCase() != "viral" &&
-                                            pagetype.toLowerCase() == "viral")
-                                ) {
-                                    if (posttype.toLowerCase() == "viral") {
-                                            window.location.href = site_url + "viral-posts.html";
-                                    } else if (posttype.toLowerCase() == "private") {
-                                            window.location.href = site_url + "my-profile.html";
-                                    } else {
-                                            window.location.href = site_url + "home.html";
-                                    }
+                    if (response.status == "Success") {
+                            if (
+                                (posttype.toLowerCase() == "viral" &&
+                                        pagetype.toLowerCase() != "viral") ||
+                                (posttype.toLowerCase() != "viral" &&
+                                        pagetype.toLowerCase() == "viral")
+                            ) {
+                                if (posttype.toLowerCase() == "viral") {
+                                        window.location.href = site_url + "viral-posts.html";
+                                } else if (posttype.toLowerCase() == "private") {
+                                        window.location.href = site_url + "my-profile.html";
                                 } else {
-                                    if ($(".no_posts")[0]) {
-                                            $(".no_posts")
-                                                .after(response.post_data)
-                                                .show()
-                                                .fadeIn("slow");
-                                            $(".no_posts").remove();
-                                    } else {
-                                            $(".feed_item:first")
-                                                .before(response.post_data)
-                                                .show()
-                                                .fadeIn("slow");
-                                    }
-
-                                    Project.modules.posts.initPlyr();
-                                    media_slider_init();
-
-                                    $(".displayemoji_comment").each(function (i, e) {
-                                            var content = $(e).html();
-                                            $(e).html("");
-                                            window.emojiPicker.appendUnicodeAsImageToElement(
-                                                $(e),
-                                                content
-                                            );
-                                            $(e).show();
-                                    });
-
-                                    $(".emoji-wysiwyg-editor").html("");
-
-                                    $(".carousel" + response.postid + " .owl-item.active img").each(
-                                            function (i, e) {
-                                                $(e)[0].onload = function () {
-                                                        var owl = $(".carousel" + response.postid);
-                                                        $(owl).trigger("refresh.owl.carousel");
-                                                };
-                                            }
-                                    );
-
-                                    $(
-                                            ".carousel" + response.postid + " .owl-item.active video"
-                                    ).each(function (i, e) {
-                                            $(e).on("loadeddata", function () {
-                                                var owl = $(".carousel" + response.postid);
-                                                $(owl).trigger("refresh.owl.carousel");
-                                            });
-                                    });
+                                        window.location.href = site_url + "home.html";
+                                }
+                            } else {
+                                if ($(".no_posts")[0]) {
+                                        $(".no_posts")
+                                            .after(response.post_data)
+                                            .show()
+                                            .fadeIn("slow");
+                                        $(".no_posts").remove();
+                                } else {
+                                        $(".feed_item:first")
+                                            .before(response.post_data)
+                                            .show()
+                                            .fadeIn("slow");
                                 }
 
-                                var modalElement = document.getElementById("createPost");
-                                console.log("modal Element :" + modalElement);
-                                location.reload();
-                                var bootstrapModal =
-                                    bootstrap.Modal.getInstance(modalElement) ||
-                                    new bootstrap.Modal(modalElement);
-                                bootstrapModal.hide();
-                        } else {
-                                Project.setMessage(response.message, 0);
-                        }
-                        $("#submit_post").prop("disabled", false);
-                        $("#submit_post").removeAttr("disabled");
-                        $("#createPost").modal("toggle");
-                        $(".new_loader").hide();
+                                Project.modules.posts.initPlyr();
+                                media_slider_init();
 
-                        if (
-                                response.status == "Success" &&
-                                (posttype.toLowerCase() == "viral" ||
-                                    posttype.toLowerCase() == "Public")
-                        ) {
-                                var fd = new FormData();
-                                fd.append("post_id", response.postid);
-                                fd.append("post_type", posttype);
-                                fd.append("user_id", $("#setuserid").val());
-                                navigator.sendBeacon(site_url + "WS/viral_post_notification", fd);
-                                /*$.ajax({
-                                            url: site_url+'WS/viral_post_notification',
-                                            type: 'POST',
-                                            data: fd,
-                                            success:function(response){
-                                                console.log('push notification',response);
-                                            },
-                                            error: function (e) {
-                                                console.log("ERROR : ", e);
-                                            }
-                                        });*/
-                        }
-                    },
-                    error: function (e) {
-                        console.log("ERROR : ", e);
-                        $("#createPost").modal("toggle");
-                        $("#submit_post").prop("disabled", false);
-                        $("#submit_post").removeAttr("disabled");
-                        $(".new_loader").hide();
-                    },
+                                $(".displayemoji_comment").each(function (i, e) {
+                                        var content = $(e).html();
+                                        $(e).html("");
+                                        window.emojiPicker.appendUnicodeAsImageToElement(
+                                            $(e),
+                                            content
+                                        );
+                                        $(e).show();
+                                });
+
+                                $(".emoji-wysiwyg-editor").html("");
+
+                                $(".carousel" + response.postid + " .owl-item.active img").each(
+                                        function (i, e) {
+                                            $(e)[0].onload = function () {
+                                                    var owl = $(".carousel" + response.postid);
+                                                    $(owl).trigger("refresh.owl.carousel");
+                                            };
+                                        }
+                                );
+
+                                $(
+                                        ".carousel" + response.postid + " .owl-item.active video"
+                                ).each(function (i, e) {
+                                        $(e).on("loadeddata", function () {
+                                            var owl = $(".carousel" + response.postid);
+                                            $(owl).trigger("refresh.owl.carousel");
+                                        });
+                                });
+                            }
+
+                            var modalElement = document.getElementById("createPost");
+                            console.log("modal Element :" + modalElement);
+                            location.reload();
+                            var bootstrapModal =
+                                bootstrap.Modal.getInstance(modalElement) ||
+                                new bootstrap.Modal(modalElement);
+                            bootstrapModal.hide();
+                    } else {
+                            Project.setMessage(response.message, 0);
+                    }
+                    $("#submit_post").prop("disabled", false);
+                    $("#submit_post").removeAttr("disabled");
+                    $("#createPost").modal("toggle");
+                    $(".new_loader").hide();
+
+                    if (response.status == "Success" &&(posttype.toLowerCase() == "viral" || posttype.toLowerCase() == "Public")) {
+                        var fd = new FormData();
+                        fd.append("post_id", response.postid);
+                        fd.append("post_type", posttype);
+                        fd.append("user_id", $("#setuserid").val());
+                        navigator.sendBeacon(site_url + "WS/viral_post_notification", fd);
+                        /*$.ajax({
+                                    url: site_url+'WS/viral_post_notification',
+                                    type: 'POST',
+                                    data: fd,
+                                    success:function(response){
+                                        console.log('push notification',response);
+                                    },
+                                    error: function (e) {
+                                        console.log("ERROR : ", e);
+                                    }
+                                });*/
+                    }
+                },
+                error: function (e) {
+                    console.log("ERROR : ", e);
+                    $("#createPost").modal("toggle");
+                    $("#submit_post").prop("disabled", false);
+                    $("#submit_post").removeAttr("disabled");
+                    $(".new_loader").hide();
+                },
             });
         }
     });

@@ -6,60 +6,117 @@
 
 <div class="min-h-screen bg-[#FDFDFF] text-slate-800 font-sans flex flex-col lg:flex-row">
 
-  <aside class="lg:w-[380px] w-full lg:h-screen lg:sticky lg:top-0 bg-white border-r border-slate-100 p-8 flex flex-col justify-between z-20 shadow-sm">
-    <div>
-      <div class="flex items-center justify-between mb-12">
-        <a href="music.html" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors">
-          <i class="fa-solid fa-arrow-left text-slate-400"></i>
-        </a>
-        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500">Curated Space</span>
-      </div>
+    <aside class="lg:w-[380px] w-full lg:h-screen lg:sticky lg:top-0 bg-white border-r border-slate-100 p-8 flex flex-col z-20 shadow-sm">
 
-      <div class="text-center">
-        <div class="relative inline-block mb-6 group">
-          <div class="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-cyan-400 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-          <img src="<%$musicDetail[0]['user']['avatar']%>" alt="Avatar" class="relative w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover">
-          <span class="absolute bottom-2 right-2 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></span>
+        <!-- ================= PROFILE VIEW ================= -->
+        <div id="sidebar-profile" class="flex flex-col justify-between h-full">
+
+            <div>
+                <div class="flex items-center justify-between mb-12">
+                    <a href="music.html" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors">
+                    <i class="fa-solid fa-arrow-left text-slate-400"></i>
+                    </a>
+                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500">Curated Space</span>
+                </div>
+
+                <div class="text-center">
+                    <div class="relative inline-block mb-6 group">
+                    <div class="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-cyan-400 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                    <img src="<%$musicDetail[0]['user']['avatar']%>" alt="Avatar" class="relative w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover">
+                    <span class="absolute bottom-2 right-2 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></span>
+                    </div>
+
+                    <h2 class="text-3xl font-black tracking-tight text-slate-900 mb-1">
+                    <%$musicDetail[0]['user']['name']%>
+                    </h2>
+
+                    <p class="text-slate-400 font-medium text-sm mb-8">
+                    Architectural Cinematographer
+                    </p>
+                    
+                    <div class="flex items-center justify-center gap-10 mb-10">
+                    <div class="text-center">
+                        <span class="block text-xl font-bold text-slate-900">
+                        <%$musicDetail[0]['follower_count']%>
+                        </span>
+                        <span class="text-[10px] uppercase text-slate-400 font-bold tracking-widest">
+                        Followers
+                        </span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block text-xl font-bold text-slate-900">
+                        <%$musicDetail[0]['following_count']%>
+                        </span>
+                        <span class="text-[10px] uppercase text-slate-400 font-bold tracking-widest">
+                        Following
+                        </span>
+                    </div>
+                    </div>
+
+                    <div class="space-y-3">
+                    <button 
+                        id="follow-user"
+                        data-userid="<%$musicDetail[0]['iUserId']%>"
+                        data-state="follow"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 active:scale-[0.98]">
+                        Follow
+                    </button>
+
+                    <button 
+                        id="open-discussion-btn"
+                        class="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 py-4 rounded-2xl font-bold border border-slate-200 transition-all">
+                        <i class="fa-regular fa-comment-dots text-lg"></i>
+                        Open Discussion
+                    </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-8 mt-8 border-t border-slate-50 hidden lg:block">
+                <p class="text-[10px] text-slate-300 font-bold uppercase tracking-widest leading-relaxed">
+                    Shared Playlist &copy; 2026<br>
+                    All Rights Reserved
+                </p>
+            </div>
+
         </div>
 
-        <h2 class="text-3xl font-black tracking-tight text-slate-900 mb-1"><%$musicDetail[0]['user']['name']%></h2>
-        <p class="text-slate-400 font-medium text-sm mb-8">Architectural Cinematographer</p>
-        
-        <div class="flex items-center justify-center gap-10 mb-10">
-          <div class="text-center">
-            <span class="block text-xl font-bold text-slate-900"><%$musicDetail[0]['follower_count']%></span>
-            <span class="text-[10px] uppercase text-slate-400 font-bold tracking-widest">Followers</span>
-          </div>
-          <div class="text-center">
-            <span class="block text-xl font-bold text-slate-900"><%$musicDetail[0]['following_count']%></span>
-            <span class="text-[10px] uppercase text-slate-400 font-bold tracking-widest">Following</span>
-          </div>
-        </div>
 
-        <div class="space-y-3">
-            <button 
-                id="follow-user"
-                data-userid="<%$musicDetail[0]['iUserId']%>"
-                data-state="follow"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 active:scale-[0.98]">
-                Follow
+        <!-- ================= DISCUSSION VIEW ================= -->
+        <div id="sidebar-discussion" class="hidden flex flex-col h-full">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold">Discussion</h3>
+            <button id="close-discussion" class="text-slate-400 text-2xl leading-none hover:text-slate-700">
+                &times;
             </button>
+            </div>
 
-          <button class="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 py-4 rounded-2xl font-bold border border-slate-200 transition-all">
-            <i class="fa-regular fa-comment-dots text-lg"></i>
-            Open Discussion
-          </button>
+            <!-- Comment List -->
+            <div id="comment-list" class="flex-1 overflow-y-auto space-y-4 mb-4 pr-2" data-userid="<%$musicDetail[0]['iUserId']%>" data-postid="<%$musicDetail[0]['iPostId']%>">
+            <!-- Comments will appear here -->
+            </div>
+
+            <!-- Comment Input -->
+            <div class="border-t border-slate-100 pt-4">
+            <textarea 
+                id="comment-input"
+                placeholder="Write your thoughts..."
+                class="w-full border border-slate-200 rounded-xl p-3 resize-none focus:outline-none"
+                rows="3">
+            </textarea>
+
+            <button 
+                id="submit-comment"
+                class="mt-3 w-full bg-indigo-600 text-white py-3 rounded-xl">
+                Post Comment
+            </button>
+            </div>
+
         </div>
-      </div>
-    </div>
 
-    <div class="pt-8 mt-8 border-t border-slate-50 hidden lg:block">
-      <p class="text-[10px] text-slate-300 font-bold uppercase tracking-widest leading-relaxed">
-        Shared Playlist &copy; 2026<br>
-        All Rights Reserved
-      </p>
-    </div>
-  </aside>
+    </aside>
 
   <main class="flex-1">
     
@@ -92,6 +149,35 @@
             </div>
         </div>
     </section>
+
+    
+<!--comments section-->
+<!-- Discussion Section -->
+<section id="discussion-section" class="hidden p-8 lg:p-16 max-w-[1200px] mx-auto border-t border-slate-100">
+  
+  <h3 class="text-2xl font-bold mb-6">Discussion</h3>
+
+  <!-- Comment Form -->
+  <div class="mb-8">
+    <textarea 
+      id="comment-input"
+      placeholder="Write your thoughts..."
+      class="w-full border border-slate-200 rounded-xl p-4 resize-none focus:outline-none"
+      rows="4"></textarea>
+
+    <button 
+      id="submit-comment"
+      class="mt-4 px-6 py-3 bg-indigo-600 text-white rounded-xl">
+      Post Comment
+    </button>
+  </div>
+
+  <!-- Comment List -->
+  <div id="comment-list" class="space-y-6">
+    <!-- Comments will appear here -->
+  </div>
+
+</section>
 
     <section class="p-8 lg:p-16 max-w-[1800px] mx-auto">
       <div class="flex items-end justify-between mb-12">
@@ -147,8 +233,125 @@
   </main>
 </div>
 
+
 <!--jQuery to play and pause audios-->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+const commentInput = $("#comment-input");
+commentInput.val("");
+$(document).ready(function () {
+
+    const profileView = $("#sidebar-profile");
+    const discussionView = $("#sidebar-discussion");
+    const commentList = $("#comment-list");
+
+    // 🔹 Open Discussion
+    $("#open-discussion-btn").on("click", function () {
+
+        profileView.addClass("hidden");
+        discussionView.removeClass("hidden");
+
+        const postId = commentList.data("postid");
+        const userId = commentList.data("userid");
+
+        loadComments(postId, userId);
+    });
+
+    // 🔹 Close Discussion
+    $("#close-discussion").on("click", function () {
+        discussionView.addClass("hidden");
+        profileView.removeClass("hidden");
+    });
+
+});
+
+function loadComments(postId, userId) {
+
+    const commentList = $("#comment-list");
+
+    commentList.html(`
+        <div class="text-center py-6 text-slate-400">
+            <i class="fa-solid fa-spinner fa-spin text-xl text-indigo-500"></i>
+        </div>
+    `);
+
+    $.post("<%$this->url->make('home/home/get_comments')%>", {
+        comment_post_id: postId,
+        raw_data: 1
+    }, function (res) {
+
+        if (!res.comments_data || res.comments_data.length === 0) {
+            commentList.html(`
+                <div class="text-center text-slate-400">
+                    No comments yet
+                </div>
+            `);
+            return;
+        }
+
+        let html = "";
+
+        $.each(res.comments_data, function (i, c) {
+
+            html += `
+                <div class="border border-slate-200 p-3 rounded-xl">
+                    <div class="flex justify-between items-center mb-1">
+                        <strong>${c.user_name}</strong>
+                        <span class="text-xs text-slate-400">
+                            ${c.created_at || ''}
+                        </span>
+                    </div>
+                    <p class="text-sm">${c.comment}</p>
+                </div>
+            `;
+        });
+
+        commentList.html(html);
+
+    }, "json");
+}
+
+$(document).on("click", "#submit-comment", function () {
+
+    const commentInput = $("#comment-input");
+    const commentText = commentInput.val().trim();
+    const commentList = $("#comment-list");
+
+    if (!commentText) return;
+
+    const postId = commentList.data("postid");
+
+    $.ajax({
+        url: "<%$this->url->make('home/home/add_comment')%>",
+        type: "POST",
+        data: {
+            comment: commentText,
+            comment_post_id: postId
+        },
+        dataType: "json",
+        success: function (response) {
+
+            if (response.status === "success") {
+
+                const newComment = `
+                    <div class="border border-slate-200 p-3 rounded-xl">
+                        <div class="flex justify-between items-center mb-1">
+                            <strong>${response.user_name || 'You'}</strong>
+                            <span class="text-xs text-slate-400">
+                                ${new Date().toLocaleString()}
+                            </span>
+                        </div>
+                        <p class="text-sm">${commentText}</p>
+                    </div>
+                `;
+
+                commentList.prepend(newComment);
+                commentInput.val("");
+            }
+        }
+    });
+});
+</script>
 
 <script>
 $(document).ready(function () {

@@ -1,35 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Outlet, Route, Routes } from "react-router-dom";
+import DashboardLayout from "./components/layout/DashboardLayout";
+import SideNavBar from "./components/sidebar";
+import { useUser } from "./context/UserContext";
+import MovementsPage from "./pages/MovementsPage";
+import MovementDetailsPage from "./pages/MovementDetailsPage";
 
-function App() {
-  const [count, setCount] = useState(0)
+function DashboardShell() {
+    const { profile, isLoading } = useUser();
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    return (
+        <DashboardLayout
+            sidebar={<SideNavBar user={profile} isLoading={isLoading} />}
+            headerUser={profile}
+            isHeaderLoading={isLoading}
+        >
+            <Outlet />
+        </DashboardLayout>
+    );
 }
 
-export default App
+function App() {
+    return (
+        <Routes>
+            <Route element={<DashboardShell />}>
+                <Route path="/" element={<MovementsPage />} />
+                <Route path="/popularmovement" element={<MovementsPage />} />
+                <Route
+                    path="/movement-details/:movementId"
+                    element={<MovementDetailsPage />}
+                />
+                <Route
+                    path="/movement-details"
+                    element={<MovementDetailsPage />}
+                />
+                <Route
+                    path="/popularmovement/movement-details/:movementId"
+                    element={<MovementDetailsPage />}
+                />
+                <Route
+                    path="/popularmovement/movement-details"
+                    element={<MovementDetailsPage />}
+                />
+                <Route path="*" element={<MovementsPage />} />
+            </Route>
+        </Routes>
+    );
+}
+
+export default App;

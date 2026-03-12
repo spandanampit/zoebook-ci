@@ -261,10 +261,7 @@ class Movement extends Cit_Controller
             "user_id" => $user_id,
         );
         $mymovement = $this->cit_api_model->callAPI("my_movements", $params);
-        echo "<pre>";
-        print_r($mymovement);
-        echo "</pre>";
-        die;
+        
 
         $params['user_id'] = $user_id;
         $params['profile_user_id'] = $user_id;
@@ -1457,4 +1454,74 @@ class Movement extends Cit_Controller
                   'html_content' => $this->smarty->fetch('common/movement_feedlist.tpl'),
             ]);
       }
+
+    public function popularmovementVtwo()
+    {
+        $page_index = $this->input->post('page_index');
+        $user_id = $this->session->userdata('iUserId');
+
+        $params = [
+            'user_id' => $user_id,
+            'page_index' => $page_index,
+        ];
+
+        $this->assign_language();
+
+        $popular_movement = $this->cit_api_model->callAPI("popular_movements", $params);
+
+        $params['user_id'] = $user_id;
+        $params['profile_user_id'] = $user_id;
+        $api_resp = $this->cit_api_model->callAPI('my_profile', $params);
+        #pr($api_resp,1);
+        if (empty($api_resp['data']) && $api_resp['settings']['success'] != 1) {
+            throw new Exception($api_resp['settings']['message']);
+        }
+
+        $logged_userdata = $api_resp['data'][0];
+
+        $userdata = $this->session->userdata();
+        $userinfo = array(
+            'u_profile_image' => $logged_userdata['u_profile_image'],
+            'u_name' => $userdata['vName'],
+            'iUserId' => $user_id,
+        );
+        $data = [
+            'popularmovement' => $popular_movement['data'],
+            'userinfo' => $userinfo,
+            'page_type' => 'movement',
+        ];
+        if ($this->input->is_ajax_request()) {
+            if (!empty($popular_movement['data'])) {
+                $data['popularmovement'] = $popular_movement['data'];
+
+                // echo "<pre>";
+                // print_r($data['popularmovement']);
+                // echo "</pre>";
+
+                // Render the view for the new posts and send it back as HTML
+                // $html = $this->smarty->fetch('application/front/movement/views/popularmovement.tpl', $data);
+
+                $response = [
+                    'success' => true,
+                    'message' => 'Success',
+                    'popularMovements' => $data,
+
+                ];
+                $this->skip_template_view();
+                echo json_encode($response);
+            } else {
+                echo json_encode(['success' => false]);
+            }
+        } else {
+            $this->smarty->assign($data);
+        }
+    }
+
+    public function reactMovement() {
+        $user_id = $this->session->userdata('iUserId');
+
+        $this->smarty->assign('user_id', $user_id);
+        $this->smarty->assign('page_type', 'reactmovement');
+        $this->smarty->display('reactmovement.tpl');
+    }
 }
