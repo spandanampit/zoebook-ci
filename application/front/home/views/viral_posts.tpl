@@ -1,6 +1,7 @@
 <%$this->js->add_js("front/plyr.js")%>
 <%$this->css->add_css("front/plyr.css")%>
 <%$this->css->css_src()%>
+
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-DLV476FTS6"></script> <script> window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-DLV476FTS6'); </script>
 <style>
 .emoji_postinfo .emoji-wysiwyg-editor { height : 130px !important;} 

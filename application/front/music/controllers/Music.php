@@ -254,6 +254,12 @@ class Music extends Cit_Controller {
     {
         $offset = ($page - 1) * $limit;
 
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 Get Music Posts
+        |--------------------------------------------------------------------------
+        */
+
         $this->db->select("
             p.*,
             u.iUsersId AS user_id,
@@ -276,7 +282,7 @@ class Music extends Cit_Controller {
             $this->db->where('p.iPostId', $post_id);
         }
 
-        // 🔥 pagination
+        $this->db->order_by('p.iPostId', 'DESC'); // optional but recommended
         $this->db->limit($limit, $offset);
 
         $posts = $this->db->get()->result_array();
@@ -285,23 +291,47 @@ class Music extends Cit_Controller {
             return [];
         }
 
-        // tracks
-        $tracks = $this->db->where('eStatus', 'Active')->get('music_tracks')->result_array();
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 Get Latest Track Per Post
+        |--------------------------------------------------------------------------
+        */
+
+        $post_ids = array_column($posts, 'iPostId');
+
+        $this->db->reset_query();
+
+        $this->db->where_in('iPostId', $post_ids);
+        $this->db->where('eStatus', 'Active');
+        $this->db->order_by('dAddedDate', 'DESC');
+
+        $tracks = $this->db->get('music_tracks')->result_array();
 
         $trackMap = [];
+
         foreach ($tracks as $track) {
-            $trackMap[$track['iPostId']] = [
-                'audio_url'     => "https://s3.us-east-2.amazonaws.com/zoebook/music/{$track['iUserId']}/audio/{$track['vUploadFile']}",
-                'thumbnail_url' => "https://s3.us-east-2.amazonaws.com/zoebook/music/{$track['iUserId']}/thumbnail/{$track['vMusicThumbnail']}",
-                'status'        => $track['eStatus'],
-                'title'         => $track['title'],
-                'duration'      => $track['duration'],
-            ];
+            // keep only newest track per post
+            if (!isset($trackMap[$track['iPostId']])) {
+                $trackMap[$track['iPostId']] = [
+                    'audio_url'     => "https://s3.us-east-2.amazonaws.com/zoebook/music/{$track['iUserId']}/audio/{$track['vUploadFile']}",
+                    'thumbnail_url' => "https://s3.us-east-2.amazonaws.com/zoebook/music/{$track['iUserId']}/thumbnail/{$track['vMusicThumbnail']}",
+                    'status'        => $track['eStatus'],
+                    'title'         => $track['title'],
+                    'duration'      => $track['duration'],
+                ];
+            }
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 Build Final Response
+        |--------------------------------------------------------------------------
+        */
 
         $response = [];
 
         foreach ($posts as $post) {
+
             $postId = $post['iPostId'];
 
             $post['user'] = [
@@ -311,12 +341,18 @@ class Music extends Cit_Controller {
                 'avatar' => $post['vProfileImage']
                     ? "https://d1ap1pbk3mm4im.cloudfront.net/compress_profile_image/{$post['vProfileImage']}"
                     : null,
-                'cover' => $post['vCoverPhoto']
+                'cover'  => $post['vCoverPhoto']
                     ? "https://d1ap1pbk3mm4im.cloudfront.net/compress_profile_image/{$post['vCoverPhoto']}"
                     : null
             ];
 
-            unset($post['user_id'], $post['vName'], $post['vEmail'], $post['vProfileImage'], $post['vCoverPhoto']);
+            unset(
+                $post['user_id'],
+                $post['vName'],
+                $post['vEmail'],
+                $post['vProfileImage'],
+                $post['vCoverPhoto']
+            );
 
             $post['music'] = $trackMap[$postId] ?? null;
 
@@ -325,6 +361,7 @@ class Music extends Cit_Controller {
 
         return $response;
     }
+
 
 
     //This function will fetch those users who have uploaded songs.
@@ -437,4 +474,8 @@ class Music extends Cit_Controller {
         $this->smarty->assign('musicDetail', $musicPost);
         $this->smarty->assign('otherPosts', $otherPosts);
     }
+
+
+
+    //Comments 
 }

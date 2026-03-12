@@ -51,44 +51,166 @@ $(document).on("submit", "#musicUploadForm", function (e) {
             contentType: false,
             processData: false,
             success: function (res) {
-                console.log("Music Upload Response:", res);
+    if (typeof res === "string") res = JSON.parse(res);
 
-                if (typeof res === "string") {
-                    res = JSON.parse(res);
-                }
+    const processngContainer = document.getElementById("loader-container-processing");
+    const audioUrl = res.audio_url;
+    const thumbUrl = res.thumbnail_url;
 
-                const processngContainer = document.getElementById("loader-container-processing");
-
-                const audioUrl = res.audio_url;
-                const thumbUrl = res.thumbnail_url;
-
-                const musicHtml = `
-                    <div style="display:flex; align-items:center; gap:15px;">
-                        <img src="${thumbUrl}" 
-                            style="width:120px;height:120px;object-fit:cover;border-radius:12px;" />
-
-                        <audio controls style="width:100%;">
-                            <source src="${audioUrl}" type="audio/mpeg">
-                            Your browser does not support the audio element.
-                        </audio>
-                    </div>
-                `;
-
-                processngContainer.innerHTML = `
-                    <div style="text-align:center; padding:20px;">
-                        <div style="display:flex;">
-                            <h3 style="text-align:left;width:70%;">🎵 Just Uploaded Music</h3>
-                            <div style="width:30%;text-align:right;">
-                                <i id="reloadBtn" class="fa fa-refresh fa-spin" style="font-size:22px;cursor:pointer;"></i>
-                            </div>
-                        </div>
-
-                        <div style="margin-top:15px;">
-                            ${musicHtml}
-                        </div>
-                    </div>
-                `;
+    processngContainer.innerHTML = `
+        <style>
+            /* Container styling */
+            .music-post-card {
+                position: relative;
+                max-width: 600px;
+                margin: 20px auto;
+                height: 350px;
+                border-radius: 24px;
+                overflow: hidden;
+                font-family: 'Inter', -apple-system, sans-serif;
+                background: #000; /* Fallback */
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             }
+
+            /* Background Image */
+            .card-bg {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s ease;
+            }
+
+            .music-post-card:hover .card-bg {
+                transform: scale(1.05);
+            }
+
+            /* Dark Overlay for text readability */
+            .card-overlay {
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+            }
+
+            /* Content Layout */
+            .card-content {
+                position: absolute;
+                inset: 0;
+                padding: 24px;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                color: white;
+            }
+
+            /* Trending Badge */
+            .badgeNew {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(4px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                width: fit-content;
+                margin-bottom: 12px;
+                color: #22c55e;
+                bottom: 55%;
+                position: relative;
+            }
+
+            .song-title {
+                font-size: 28px;
+                font-weight: 800;
+                margin: 0 0 8px 0;
+                letter-spacing: -0.5px;
+            }
+
+            /* Artist Section */
+            .artist-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+
+            .artist-thumb {
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                object-fit: cover;
+            }
+
+            .artist-name {
+                font-size: 14px;
+                font-weight: 500;
+                opacity: 0.9;
+            }
+
+            /* Floating Play Button */
+            .play-btn-float {
+                position: absolute;
+                top: 24px;
+                right: 24px;
+                width: 48px;
+                height: 48px;
+                background: #1ed760;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: black;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                cursor: pointer;
+            }
+
+            /* Audio Player Custom styling (Standard) */
+            .audio-container {
+                width: 100%;
+                background: rgba(255,255,255,0.05);
+                border-radius: 12px;
+                padding: 5px;
+            }
+
+            audio {
+                width: 100%;
+                height: 32px;
+                opacity: 0.8;
+                filter: invert(1) hue-rotate(180deg); /* Makes standard player look dark/modern */
+            }
+            
+            #reloadBtn {
+                position: absolute;
+                top: 24px;
+                left: 24px;
+                color: white;
+                cursor: pointer;
+                background: rgba(0,0,0,0.3);
+                padding: 8px;
+                border-radius: 50%;
+            }
+        </style>
+
+        <div class="music-post-card">
+            <img src="${thumbUrl}" class="card-bg" alt="Cover" />
+            <div class="card-overlay"></div>
+
+            <div class="card-content">
+                <div class="badgeNew">Trending Now</div>
+                <h1 class="song-title">Just Uploaded</h1>
+
+                <div class="audio-container">
+                    <audio controls>
+                        <source src="${audioUrl}" type="audio/mpeg">
+                    </audio>
+                </div>
+            </div>
+        </div>
+    `;
+}
         });
         console.log('testing music.php');
     });
@@ -235,7 +357,7 @@ $(document).on("click", "#loadMoreMusic", function () {
     $.ajax({
         url: site_url + 'music/getMorePosts',
         type: 'POST',
-        data: { page: page },
+        data: { pageIndex: page },
         dataType: 'json',
         success: function (res) {
 
