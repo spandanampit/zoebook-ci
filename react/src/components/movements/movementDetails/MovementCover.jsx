@@ -44,7 +44,7 @@ const MovementCover = ({ cover, title, isLoading }) => {
 
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 md:p-10"
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 md:p-10 mb-0"
                     onClick={() => setIsOpen(false)}
                 >
                     <button

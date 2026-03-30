@@ -223,6 +223,10 @@ $route['WS/user_post_videos'] = "post/post_list/user_post_videos";
 $route['WS/web_post_list'] = "post/post_list_web/start_post_list";
 $route['WS/random_reels'] = "post/other_post/random_reels";
 
+$route['WS/insert_post'] = "post/add_post_media_laravel/insert_post";
+
+
+
 //Playlist APIs
 $route['WS/get_my_playlist'] = "post/playlist/get_my_playlist";
 $route['WS/add_to_playlist'] = "post/playlist/add_post";
@@ -231,6 +235,12 @@ $route['WS/get_top_playlist'] = "post/playlist/get_top_playlist";
 
 //search
 $route['WS/search_post'] = "post/search_post/search_post";
+
+$route['WS/get_musics'] = "post/music_post/get_musics";
+$route['WS/get_user_music'] = "post/music_post/get_user_music";
+$route['WS/get_music_post'] = "post/music_post/get_music_post";
+$route['WS/get_users'] = "post/music_post/get_users";
+
 
 // third-party login    
 $route['WS/facebook/login'] = "wsengine/third_party/facebook";

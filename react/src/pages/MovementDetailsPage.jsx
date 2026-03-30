@@ -8,8 +8,8 @@ import {
     fetchMovementDetailsAPI,
     toggleJoinMovementAPI,
     fetchMovementPosts,
-    likePostMedia,
 } from "../services/movementService";
+import { likePostMedia } from "../services/postService";
 
 const MovementDetailsPage = () => {
     const [details, setDetails] = useState(null);
@@ -22,7 +22,6 @@ const MovementDetailsPage = () => {
     const [isLeaving, setIsLeaving] = useState(false);
     const [error, setError] = useState("");
     const [postsError, setPostsError] = useState("");
-    const [totalPostsCount, setTotalPostsCount] = useState(null);
     const [likingMediaKeys, setLikingMediaKeys] = useState({});
     const { movementId: pathMovementId } = useParams();
     const [searchParams] = useSearchParams();
@@ -124,7 +123,10 @@ const MovementDetailsPage = () => {
             }
 
             try {
-                const payload = await fetchMovementPosts(movementId, pageToLoad);
+                const payload = await fetchMovementPosts(
+                    movementId,
+                    pageToLoad,
+                );
                 const apiPosts = Array.isArray(payload?.data)
                     ? payload.data.map((post) => {
                           const rawIsLiked =
@@ -140,10 +142,6 @@ const MovementDetailsPage = () => {
                     : [];
                 const settings = payload?.settings || {};
                 const apiTotalCount = Number(settings.count);
-
-                if (Number.isFinite(apiTotalCount) && apiTotalCount >= 0) {
-                    setTotalPostsCount(apiTotalCount);
-                }
 
                 setPosts((prevPosts) => {
                     const basePosts = append ? prevPosts : [];
@@ -212,7 +210,6 @@ const MovementDetailsPage = () => {
             setIsPostsLoading(false);
             setIsLoadingMorePosts(false);
             setHasMorePosts(false);
-            setTotalPostsCount(null);
             return;
         }
 
@@ -220,7 +217,6 @@ const MovementDetailsPage = () => {
         setLikingMediaKeys({});
         setPostsPage(1);
         setHasMorePosts(true);
-        setTotalPostsCount(null);
         loadPostsPage(1, { append: false });
     }, [movementId, loadPostsPage]);
 
@@ -319,8 +315,7 @@ const MovementDetailsPage = () => {
                 ? targetPost.get_post_media
                 : [];
             const targetMedia = mediaList.find(
-                (media) =>
-                    String(media.pm_post_media_id) === String(mediaId),
+                (media) => String(media.pm_post_media_id) === String(mediaId),
             );
             if (!targetMedia) {
                 return;
@@ -431,7 +426,6 @@ const MovementDetailsPage = () => {
                     isLoading={isPostsLoading}
                     isLoadingMore={isLoadingMorePosts}
                     hasMore={hasMorePosts}
-                    totalPostsCount={totalPostsCount}
                     error={postsError}
                     sentinelRef={postsSentinelRef}
                     likingMediaKeys={likingMediaKeys}

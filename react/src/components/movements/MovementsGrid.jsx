@@ -43,6 +43,8 @@ function MovementsGrid({
   loadMoreRef,
   onToggleJoin,
   onOpenDetails,
+  getPrimaryAction,
+  getOwnerMenuOptions,
 }) {
     if (isInitialLoading && items.length === 0) {
         return <MovementsSkeleton />;
@@ -67,6 +69,8 @@ function MovementsGrid({
             movement={movement}
             onToggleJoin={onToggleJoin}
             onOpenDetails={onOpenDetails}
+            getPrimaryAction={getPrimaryAction}
+            getOwnerMenuOptions={getOwnerMenuOptions}
           />
         ))}
       </div>

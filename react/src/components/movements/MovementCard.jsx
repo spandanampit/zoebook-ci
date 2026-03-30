@@ -1,13 +1,20 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     ChevronLeft,
     ChevronRight,
     Image as ImageIcon,
+    MoreVertical,
     PlusCircle,
     Users,
 } from "lucide-react";
 
-function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
+function MovementCard({
+    movement,
+    onToggleJoin,
+    onOpenDetails,
+    getPrimaryAction,
+    getOwnerMenuOptions,
+}) {
     const {
         leaderName,
         leaderImg,
@@ -17,7 +24,11 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
         members,
         description,
         isJoined,
+        status,
     } = movement;
+    const customAction = getPrimaryAction?.(movement);
+    const ownerMenuOptions = getOwnerMenuOptions?.(movement) || [];
+    const hasOwnerMenu = ownerMenuOptions.length > 0;
 
     const slides =
         Array.isArray(movementImages) && movementImages.length > 0
@@ -28,6 +39,8 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
 
     const [activeSlide, setActiveSlide] = useState(0);
     const [failedSlides, setFailedSlides] = useState({});
+    const [isOwnerMenuOpen, setIsOwnerMenuOpen] = useState(false);
+    const ownerMenuRef = useRef(null);
 
     const hasMultipleSlides = slides.length > 1;
     const currentSlide = slides[activeSlide] || "";
@@ -53,6 +66,23 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
         setFailedSlides((prev) => ({ ...prev, [url]: true }));
     };
 
+    useEffect(() => {
+        if (!hasOwnerMenu) {
+            return undefined;
+        }
+
+        const handleOutsideClick = (event) => {
+            if (!ownerMenuRef.current?.contains(event.target)) {
+                setIsOwnerMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleOutsideClick);
+        return () => {
+            document.removeEventListener("mousedown", handleOutsideClick);
+        };
+    }, [hasOwnerMenu]);
+
     const handleOpenDetails = () => {
         onOpenDetails?.(movement);
     };
@@ -64,8 +94,26 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
         }
     };
 
+    const handlePrimaryAction = () => {
+        if (typeof customAction?.onClick === "function") {
+            customAction.onClick(movement);
+            return;
+        }
+
+        onToggleJoin?.(movement);
+    };
+
+    const primaryActionLabel =
+        customAction?.label || (isJoined ? "Leave Movement" : "Join Community");
+    const primaryActionClassName = customAction?.className
+        ? customAction.className
+        : isJoined
+          ? "bg-orange-500 text-white shadow-orange-200 hover:bg-orange-600 hover:shadow-orange-300"
+          : "bg-[#A7D397] text-white shadow-green-100 hover:bg-[#92c381]";
+    const isInactive = String(status || "").toLowerCase() === "inactive";
+
     return (
-        <article className="bg-white/75 backdrop-blur-md rounded-[2rem] shadow-xl shadow-slate-200/50 border border-white flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
+        <article className="relative bg-white/75 backdrop-blur-md rounded-[2rem] shadow-xl shadow-slate-200/50 border border-white flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
             <header className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="relative">
@@ -85,12 +133,53 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
                         </span>
                     </div>
                 </div>
-                <button
-                    className="text-slate-300 hover:text-slate-500 transition"
-                    type="button"
-                >
-                    <PlusCircle size={20} />
-                </button>
+                {hasOwnerMenu ? (
+                    <div className="relative" ref={ownerMenuRef}>
+                        <button
+                            className="text-slate-400 hover:text-slate-600 transition rounded-full p-1"
+                            type="button"
+                            aria-label="Open movement options"
+                            onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setIsOwnerMenuOpen((prev) => !prev);
+                            }}
+                        >
+                            <MoreVertical size={20} />
+                        </button>
+
+                        {isOwnerMenuOpen ? (
+                            <div className="absolute right-0 top-9 z-30 min-w-[150px] rounded-xl border border-slate-100 bg-white shadow-xl py-1.5">
+                                {ownerMenuOptions.map((option) => (
+                                    <button
+                                        key={option.label}
+                                        type="button"
+                                        className={`block w-full px-4 py-2 text-left text-sm transition ${
+                                            option.variant === "danger"
+                                                ? "text-red-600 hover:bg-red-50"
+                                                : "text-slate-700 hover:bg-slate-50"
+                                        }`}
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            setIsOwnerMenuOpen(false);
+                                            option.onClick?.(movement);
+                                        }}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : null}
+                    </div>
+                ) : (
+                    <button
+                        className="text-slate-300 hover:text-slate-500 transition"
+                        type="button"
+                    >
+                        <PlusCircle size={20} />
+                    </button>
+                )}
             </header>
 
             <div
@@ -113,7 +202,7 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
                     </div>
                 ) : null}
 
-                <div className="w-full h-64 rounded-[1.5rem] overflow-hidden bg-slate-100 shadow-inner">
+                <div className="relative w-full h-64 rounded-[1.5rem] overflow-hidden bg-slate-100 shadow-inner">
                     {!isCurrentSlideInvalid ? (
                         <img
                             src={currentSlide}
@@ -129,6 +218,14 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
                             </span>
                         </div>
                     )}
+
+                    {isInactive ? (
+                        <div className="absolute inset-0 bg-slate-900/35 backdrop-grayscale-[0.5] flex items-center justify-center">
+                            <span className="rounded-full border border-white/60 bg-white/20 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-white">
+                                Deactivated
+                            </span>
+                        </div>
+                    ) : null}
                 </div>
 
                 {hasMultipleSlides ? (
@@ -171,15 +268,11 @@ function MovementCard({ movement, onToggleJoin, onOpenDetails }) {
 
             <div className="p-6 pt-0">
                 <button
-                    className={`w-full py-4 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg ${
-                        isJoined
-                            ? "bg-orange-500 text-white shadow-orange-200 hover:bg-orange-600 hover:shadow-orange-300"
-                            : "bg-[#A7D397] text-white shadow-green-100 hover:bg-[#92c381]"
-                    }`}
+                    className={`w-full py-4 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg ${primaryActionClassName}`}
                     type="button"
-                    onClick={() => onToggleJoin?.(movement)}
+                    onClick={handlePrimaryAction}
                 >
-                    {isJoined ? "Leave Movement" : "Join Community"}
+                    {primaryActionLabel}
                 </button>
             </div>
         </article>
