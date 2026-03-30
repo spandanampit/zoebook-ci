@@ -3023,7 +3023,8 @@ AND p.iUserId NOT IN (SELECT iBlockUserId FROM block_user_list WHERE iBlockByUse
             $this->db->where(" p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =  '" . $user_id . "' AND eReportOn = 'Post' )
 AND  p.iUserId NOT IN( SELECT iUserId  FROM user_followers WHERE iFollowerId = '" . $user_id . "' AND eStatus = 'Accepted' )AND p.iUserId NOT IN (SELECT iBlockUserId FROM block_user_list WHERE iBlockByUserId  =  '" . $user_id . "' AND eStatus = 'block' )AND p.iUserId NOT IN (SELECT iBlockByUserId FROM block_user_list WHERE iBlockUserId  =  '" . $user_id . "' AND eStatus = 'block' )", FALSE, FALSE);
 
-            $this->db->order_by("p_impression_count DESC", FALSE, FALSE);
+            // $this->db->order_by("p_impression_count DESC", FALSE, FALSE);
+            $this->db->order_by("p.dAddedDate DESC, p_impression_count DESC", FALSE, FALSE);
 
             $this->db->limit(7);
 

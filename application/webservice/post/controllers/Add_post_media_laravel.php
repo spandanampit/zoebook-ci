@@ -222,4 +222,63 @@ class Add_post_media_laravel extends Cit_Controller
             ]);
         }
     }
+
+
+    public function insert_post()
+    {
+        try {
+            $user_id = $this->input->get_post('user_id');
+            $post_type = $this->input->get_post('post_type');
+            $post_text = $this->input->get_post('post_text');
+            $visibility = $this->input->get_post('visibility');
+            $post_text_emoji = $this->input->get_post('post_text_emoji');
+            $movement_id = $this->input->get_post('movement_id');
+
+            if (empty($user_id)) {
+                throw new Exception("User ID is required");
+            }
+
+            if (empty($post_type)) {
+                throw new Exception("Post type is required");
+            }
+
+            if (empty($post_text)) {
+                throw new Exception("Post text cannot be empty");
+            }
+
+            if (empty($visibility)) {
+                throw new Exception("Visibility is required");
+            }
+
+            $params_arr = array(
+                "user_id" => (int)$user_id,
+                "post_type" => trim($post_type),
+                "post_text" => trim($post_text),
+                "visibility" => trim($visibility),
+                "post_text_emoji" => $post_text_emoji,
+                "movements_id" => $movement_id,
+
+                "_edraft" => "No",
+                "_estatus" => "Active",
+                "_daddeddate" => "NOW()",
+                "_dmodifieddate" => "NOW()"
+            );
+
+            // 🔹 Call model
+            $response = $this->post_model->insert_post($params_arr);
+
+            if (!$response) {
+                throw new Exception("Post insertion failed");
+            }
+
+
+        } catch (Exception $e) {
+            $response = [
+                "success" => 0,
+                "message" => $e->getMessage()
+            ];
+        }
+
+        echo json_encode($response);
+    }
 }

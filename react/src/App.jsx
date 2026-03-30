@@ -4,6 +4,9 @@ import SideNavBar from "./components/sidebar";
 import { useUser } from "./context/UserContext";
 import MovementsPage from "./pages/MovementsPage";
 import MovementDetailsPage from "./pages/MovementDetailsPage";
+import AddMovementPage from "./pages/AddMovementPage";
+import MyMovementsPage from "./pages/MyMovementsPage";
+import EditMovementPage from "./pages/EditMovementPage";
 
 function DashboardShell() {
     const { profile, isLoading } = useUser();
@@ -25,6 +28,7 @@ function App() {
             <Route element={<DashboardShell />}>
                 <Route path="/" element={<MovementsPage />} />
                 <Route path="/popularmovement" element={<MovementsPage />} />
+                <Route path="/mymovements" element={<MyMovementsPage />} />
                 <Route
                     path="/movement-details/:movementId"
                     element={<MovementDetailsPage />}
@@ -40,6 +44,11 @@ function App() {
                 <Route
                     path="/popularmovement/movement-details"
                     element={<MovementDetailsPage />}
+                />
+                <Route path="/createmovement" element={<AddMovementPage />} />
+                <Route
+                    path="/editmovement/:movementId"
+                    element={<EditMovementPage />}
                 />
                 <Route path="*" element={<MovementsPage />} />
             </Route>

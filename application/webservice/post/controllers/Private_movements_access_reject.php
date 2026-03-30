@@ -498,8 +498,7 @@ class Private_movements_access_reject extends Cit_Controller
                 throw new Exception("No records found.");
             }
         }
-        catch(Exception $e)
-        {
+        catch(Exception $e) {
             $success = 0;
             $this->block_result["data"] = array();
         }
@@ -606,9 +605,7 @@ class Private_movements_access_reject extends Cit_Controller
 
             $mu_movement_users_id = isset($input_params["mu_movement_users_id"]) ? $input_params["mu_movement_users_id"] : "";
             $this->block_result = $this->movement_users_model->private_movements_inactive($mu_movement_users_id);
-        }
-        catch(Exception $e)
-        {
+        } catch(Exception $e) {
             $success = 0;
             $this->block_result["data"] = array();
         }
