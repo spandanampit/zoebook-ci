@@ -1,5 +1,6 @@
 import { ChevronRight, PlusCircle, TrendingUp, UserCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { FALLBACK_IMAGE, SITE_URL } from "../../config/siteConfig";
 
 function SideNavBarSkeleton() {
     return (
@@ -16,11 +17,13 @@ function SideNavBarSkeleton() {
     );
 }
 
+const isProduction = import.meta.env.VITE_PROJECT_ENVIRONMENT === "PRODUCTION";
+
 function SideNavBar({ user, isLoading = false }) {
     const currentUser = user ?? {
         name: "User",
         profileImage:
-            "https://zoebook.mydevfactory.com/public/images/noimage.gif",
+            FALLBACK_IMAGE,
         membership: "Profile unavailable",
     };
 
@@ -40,6 +43,9 @@ function SideNavBar({ user, isLoading = false }) {
                     src={currentUser.profileImage}
                     alt={currentUser.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                        e.target.src = FALLBACK_IMAGE;
+                    }}
                 />
             </div>
 
@@ -68,21 +74,37 @@ function SideNavBar({ user, isLoading = false }) {
                     />
                 </NavLink>
 
-                <NavLink
-                    to="/mymovements"
-                    className={({ isActive }) =>
-                        `${navItemClassName({ isActive })} bg-[#A7D397] hover:opacity-90 shadow-xl shadow-green-100`
-                    }
-                >
-                    <span className="flex items-center gap-3">
-                        <UserCircle size={18} />
-                        My Movements
-                    </span>
-                    <ChevronRight
-                        size={14}
-                        className="opacity-50 group-hover:translate-x-1 transition-transform"
-                    />
-                </NavLink>
+                {isProduction ? (
+                    <a
+                        href={SITE_URL + "/mymovement.html"}
+                        className="group flex items-center justify-between text-white p-4 rounded-2xl font-bold text-sm transition-all bg-[#A7D397] hover:opacity-90 shadow-xl shadow-green-100"
+                    >
+                        <span className="flex items-center gap-3">
+                            <UserCircle size={18} />
+                            My Movements
+                        </span>
+                        <ChevronRight
+                            size={14}
+                            className="opacity-50 group-hover:translate-x-1 transition-transform"
+                        />
+                    </a>
+                ) : (
+                    <NavLink
+                        to="/mymovements"
+                        className={({ isActive }) =>
+                            `${navItemClassName({ isActive })} bg-[#A7D397] hover:opacity-90 shadow-xl shadow-green-100`
+                        }
+                    >
+                        <span className="flex items-center gap-3">
+                            <UserCircle size={18} />
+                            My Movements
+                        </span>
+                        <ChevronRight
+                            size={14}
+                            className="opacity-50 group-hover:translate-x-1 transition-transform"
+                        />
+                    </NavLink>
+                )}
 
                 <NavLink
                     to="/createmovement"

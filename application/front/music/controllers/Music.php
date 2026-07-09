@@ -419,8 +419,14 @@ class Music extends Cit_Controller {
         $postId = $this->input->get('postId');
         $musicPost = $this->getMusicPosts(null, $postId);
 
+        // $params['profile_user_id'] = 1;
         $params['profile_user_id'] = $musicPost[0]['iUserId'];
         $musicUserDetails =  $this->cit_api_model->callAPI('my_profile', $params);
+        $following_status = $musicUserDetails['data'][0]['is_follwing'] ?? 'Follow';
+        if($following_status == 'No') {
+            $following_status = 'Follow';
+        }
+
         $musicPost[0]['follower_count'] = $musicUserDetails['data'][0]['follower_count'];
         $musicPost[0]['following_count'] = $musicUserDetails['data'][0]['following_count'];
 
@@ -429,6 +435,8 @@ class Music extends Cit_Controller {
         $this->smarty->assign('userinfo', $userinfo);
         $this->smarty->assign('musicDetail', $musicPost);
         $this->smarty->assign('otherPosts', $otherPosts);
+        $this->smarty->assign('following_status', $following_status);
+        $this->smarty->assign('userId', $user_id);
         $this->smarty->display('musicdetails.tpl');
     }
 
@@ -465,6 +473,12 @@ class Music extends Cit_Controller {
 
         $params['profile_user_id'] = $musicPost[0]['iUserId'];
         $musicUserDetails =  $this->cit_api_model->callAPI('my_profile', $params);
+
+        $following_status = $musicUserDetails['data'][0]['is_follwing'] ?? 'Follow';
+        if($following_status == 'No') {
+            $following_status = 'Follow';
+        }
+
         $musicPost[0]['follower_count'] = $musicUserDetails['data'][0]['follower_count'];
         $musicPost[0]['following_count'] = $musicUserDetails['data'][0]['following_count'];
 
@@ -473,6 +487,9 @@ class Music extends Cit_Controller {
         $this->smarty->assign('userinfo', $userinfo);
         $this->smarty->assign('musicDetail', $musicPost);
         $this->smarty->assign('otherPosts', $otherPosts);
+        $this->smarty->assign('following_status', $following_status);
+        $this->smarty->assign('userId', $user_id);
+
     }
 
 

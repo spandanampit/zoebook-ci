@@ -7,15 +7,19 @@ import {
     Plus,
 } from "lucide-react";
 import { decodeEscapedText } from "../../../utils/textDecoder";
-import { uploadVideoToS3 } from "../../../utils/uploadToS3";
 import CreateMovementPostModal from "./modals/CreateMovementPostModal";
 
-const MovementInfo = ({ movement, isLoading, error, onPostClick }) => {
+const MovementInfo = ({
+    movement,
+    isLoading,
+    error,
+    submitPost,
+    isSubmitting,
+    uploadProgress,
+}) => {
     const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [description, setDescription] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
 
     if (isLoading) {
         return (
@@ -61,8 +65,6 @@ const MovementInfo = ({ movement, isLoading, error, onPostClick }) => {
         setIsCreatePostModalOpen(false);
         setSelectedFile(null);
         setDescription("");
-        setIsSubmitting(false);
-        setUploadProgress(0);
     };
 
     const handleFileChange = (event) => {
@@ -70,7 +72,7 @@ const MovementInfo = ({ movement, isLoading, error, onPostClick }) => {
         setSelectedFile(file);
     };
 
-    const handleSubmitCreatePost = async (event) => {
+    const handleSubmitCreatePost = (event) => {
         event.preventDefault();
 
         const trimmedDescription = description.trim();
@@ -78,34 +80,15 @@ const MovementInfo = ({ movement, isLoading, error, onPostClick }) => {
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            const uploadedFileUrl = selectedFile
-                ? await uploadVideoToS3(selectedFile, (progress) =>
-                      setUploadProgress(progress),
-                  )
-                : "";
+        // Close modal immediately — upload runs in background with toast progress
+        const fileToUpload = selectedFile;
+        handleCloseCreatePostModal();
 
-            if (typeof onPostClick === "function") {
-                await onPostClick({
-                    file: selectedFile,
-                    fileUrl: uploadedFileUrl,
-                    mediaType: selectedFile?.type?.startsWith("video/")
-                        ? "video"
-                        : "image",
-                    description: trimmedDescription,
-                });
-            }
-
-            handleCloseCreatePostModal();
-        } catch (submitError) {
-            console.error("Failed to submit movement post:", submitError);
-            setIsSubmitting(false);
-            window.alert(
-                submitError?.message ||
-                    "Failed to upload and submit post. Please try again.",
-            );
-        }
+        // Fire-and-forget: the hook's toast handles success/error messaging
+        submitPost({
+            file: fileToUpload,
+            description: trimmedDescription,
+        });
     };
 
     return (
@@ -228,3 +211,4 @@ const SparkleIcon = () => (
 );
 
 export default MovementInfo;
+

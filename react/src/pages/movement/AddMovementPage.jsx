@@ -1,4 +1,4 @@
-import { AddMovementSection } from "../components/movements/addMovement";
+import { AddMovementSection } from "../../components/movements/addMovement";
 
 const AddMovementPage = () => {
     return <AddMovementSection />;

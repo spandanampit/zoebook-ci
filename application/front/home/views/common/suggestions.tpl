@@ -79,35 +79,46 @@
 
     // Function to decode Base64 and set the image URL
     function setProfileImage(base64ImageId, profileImageId) {
-        // console.log('function');
-        // console.log(base64ImageId);
         const inputElement = document.getElementById(base64ImageId);
-        // console.log(inputElement);
-
         if (inputElement) {
-            const dynamicUrl = inputElement.value;
-            // console.log(dynamicUrl);
-            if (dynamicUrl) {
-                // console.log(`Dynamic URL for ${base64ImageId}:`, dynamicUrl);
+            const dynamicUrl = inputElement.value ? inputElement.value.trim() : '';
+            const profileImage = document.getElementById(profileImageId);
+            if (!profileImage) return;
+
+            if (!dynamicUrl) {
+                profileImage.src = "<%$this->config->item('images_url')%>noimage.gif";
+                return;
+            }
+
+            // Case 1: Data URL already
+            if (dynamicUrl.startsWith('data:image')) {
+                profileImage.src = dynamicUrl;
+                return;
+            }
+
+            // Case 2: Standard URL or image_resize URL
+            if (dynamicUrl.startsWith('http') || dynamicUrl.startsWith('/')) {
                 const encodedString = getParameterByName('pic', dynamicUrl);
                 if (encodedString) {
-                    // console.log(`Encoded Base64 String for ${base64ImageId}:`, encodedString);
-                    const decodedUrl = atob(encodedString);
-                    // console.log(`Decoded URL for ${base64ImageId}:`, decodedUrl);
-                    const profileImage = document.getElementById(profileImageId);
-                    if (profileImage) {
-                        profileImage.src = decodedUrl;
-                    } else {
-                        console.error(`Profile image element not found: ${profileImageId}`);
+                    try {
+                        profileImage.src = atob(encodedString);
+                    } catch (e) {
+                        profileImage.src = dynamicUrl;
                     }
                 } else {
-                    console.error(`No encoded string found in the URL for ${base64ImageId}`);
+                    profileImage.src = dynamicUrl;
                 }
-            } else {
-                console.error(`No dynamic URL found for ${base64ImageId}`);
+                return;
             }
-        } else {
-            console.error(`Input element not found: ${base64ImageId}`);
+
+            // Case 3: Raw Base64 string
+            const isBase64 = !dynamicUrl.includes('.') && dynamicUrl.length > 50;
+            if (isBase64) {
+                profileImage.src = 'data:image/jpeg;base64,' + dynamicUrl;
+            } else {
+                // It's a relative filename, prepend cloudfront base URL
+                profileImage.src = 'https://d1ap1pbk3mm4im.cloudfront.net/compress_profile_image/' + dynamicUrl;
+            }
         }
     }
 

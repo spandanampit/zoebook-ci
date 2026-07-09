@@ -74,7 +74,9 @@
                   <a href="javascript:void(0)" class="forgot-linkk" data-toggle="modal" data-target="#forgotModal"><%$forgot_password%>?</a>
                 </div>
 
-                <input type="text" class="form-control d-none" id="sendMail" name="User[vSendMail]" placeholder="Send email">
+                <!--<input type="text" class="form-control d-none" id="sendMail" name="User[vSendMail]" placeholder="Send email">-->
+
+                <input type="text" name="websiteUrl"  id="websiteUrl" class="form-control d-none" style="display:none">
 
 
                 <button type="submit" class="btn btn-primary form-btn" title="Sign Up" id="signup"><%$submit%></button>

@@ -35,3 +35,4 @@ application/config/database.php
 application/config/payment.php
 .vscode/
 
+react/.env.production

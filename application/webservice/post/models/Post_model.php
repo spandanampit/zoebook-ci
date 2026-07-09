@@ -465,7 +465,9 @@ class Post_model extends CI_Model
      * @param array $settings_params settings_params are used for paging parameters.
      * @return array $return_arr returns response of query block.
      */
-    public function get_my_posts_web($params_arr = array(), $page_index = 1, &$settings_params = array())
+
+    //updated the code here 22-06-2026 changes reason - {sync the viral post data in the home and profile pages}
+    public function get_my_posts_web($params_arr = array(), $page_index = 1, &$settings_params = array(),$latitude = '', $longitude = '')
     {
         try {
             $result_arr = array();
@@ -480,9 +482,21 @@ class Post_model extends CI_Model
             $this->db->where_in("p.eDraft", array('No'));
             $this->db->where_in("p.eStatus", array('Active', 'InProgress'));
             $this->db->where_not_in("p.eVisibility", array('Movement'));
-            $this->db->where("p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =  '" . $params_arr["user_id"] . "' AND eReportOn = 'Post' )
+// $this->db->where_in("p.eVisibility", array('Public', 'Viral'));
+//             $this->db->where("p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =  '" . $params_arr["user_id"] . "' AND eReportOn = 'Post' )
+// AND (p.iUserId NOT IN (SELECT iBlockUserId FROM block_user_list WHERE iBlockByUserId  =  '" . $params_arr["user_id"] . "' AND eStatus = 'block' ) AND p.iUserId NOT IN (SELECT iBlockByUserId FROM block_user_list WHERE iBlockUserId  =  '" . $params_arr["user_id"] . "' AND eStatus = 'block' )) AND
+// IF('" . $params_arr["is_feed"] . "' = '1', ( (p.iUserId = '" . $params_arr["user_id"] . "'  OR  p.iUserId IN( SELECT iUserId  FROM user_followers WHERE iFollowerId = '" . $params_arr["user_id"] . "' AND eStatus = 'Accepted' )) AND p.eVisibility = 'Public'  ),  p.iUserId = '" . $params_arr["user_id"] . "')
+// AND p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =  '" . $params_arr["user_id"] . "' AND eReportOn = 'Post' )", FALSE, FALSE);
+
+$this->db->where("p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =  '" . $params_arr["user_id"] . "' AND eReportOn = 'Post' )
 AND (p.iUserId NOT IN (SELECT iBlockUserId FROM block_user_list WHERE iBlockByUserId  =  '" . $params_arr["user_id"] . "' AND eStatus = 'block' ) AND p.iUserId NOT IN (SELECT iBlockByUserId FROM block_user_list WHERE iBlockUserId  =  '" . $params_arr["user_id"] . "' AND eStatus = 'block' )) AND
-IF('" . $params_arr["is_feed"] . "' = '1', ( (p.iUserId = '" . $params_arr["user_id"] . "'  OR  p.iUserId IN( SELECT iUserId  FROM user_followers WHERE iFollowerId = '" . $params_arr["user_id"] . "' AND eStatus = 'Accepted' )) AND p.eVisibility = 'Public'  ),  p.iUserId = '" . $params_arr["user_id"] . "')
+IF('" . $params_arr["is_feed"] . "' = '1', 
+    ( (p.iUserId = '" . $params_arr["user_id"] . "'  
+       OR p.iUserId IN( SELECT iUserId FROM user_followers WHERE iFollowerId = '" . $params_arr["user_id"] . "' AND eStatus = 'Accepted' )) 
+      AND p.eVisibility IN ('Public', 'Viral') 
+    ),  
+    p.iUserId = '" . $params_arr["user_id"] . "'
+)
 AND p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =  '" . $params_arr["user_id"] . "' AND eReportOn = 'Post' )", FALSE, FALSE);
 
             $this->db->stop_cache();
@@ -513,6 +527,8 @@ AND p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =
             $this->db->select("ts.vArchiveId AS ts_archive_id");
             $this->db->select("ts.eArchiveStatus AS ts_archive_status");
             $this->db->select("ts.vURL AS live_video_url");
+            $this->db->select("(ROUND(GeoDistMiles(u.vLatitude,u.vLongtitude,'" . $latitude . "','" . $longitude . "','km'),2)) AS distance_kms", FALSE);
+
 
             $settings_params['count'] = $total_records;
 
@@ -525,7 +541,10 @@ AND p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =
             $settings_params['prev_page'] = ($current_page > 1) ? 1 : 0;
             $settings_params['next_page'] = ($current_page + 1 > $total_pages) ? 0 : 1;
 
-            $this->db->order_by("p.iPostId", "desc");
+            // $this->db->order_by("p.iPostId", "desc");
+            // $this->db->order_by("p.dAddedDate DESC, ISNULL(distance_kms) ASC, distance_kms ASC, p.iPostId DESC", FALSE, FALSE);
+            $this->db->order_by("p.dModifiedDate DESC, ISNULL(distance_kms) ASC, distance_kms ASC, p.iPostId DESC", FALSE, FALSE);
+
             $this->db->limit($record_limit, $start_index);
             $result_obj = $this->db->get();
             $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
@@ -661,7 +680,7 @@ AND p.iPostId NOT IN (SELECT iPostId FROM post_report_abuse WHERE iReportedBy  =
 
             $this->db->where_in("p.eDraft", array('No'));
             $this->db->where_in("p.eStatus", array('Active', 'InProgress'));
-            $this->db->where_in("p.eVisibility", array('Public'));
+            $this->db->where_in("p.eVisibility", array('Public', 'Viral'));
             if ($tmp_arr = filterEmptyValues($params_arr["p_post_type"])) {
                 $old_arr = $params_arr["p_post_type"];
                 $params_arr["p_post_type"] = $tmp_arr;
@@ -2297,6 +2316,7 @@ AND p.iUserId NOT IN (SELECT iBlockUserId FROM block_user_list WHERE iBlockByUse
                   $settings_params['prev_page'] = ($current_page > 1) ? 1 : 0;
                   $settings_params['next_page'] = ($current_page + 1 > $total_pages) ? 0 : 1;
 
+                //23-06-2026
                   $this->db->order_by("ISNULL(distance_kms) ASC,distance_kms ASC, p.iPostId DESC", FALSE, FALSE);
                   $this->db->limit($record_limit, $start_index);
                   $result_obj = $this->db->get();
@@ -2357,7 +2377,7 @@ AND p.iUserId NOT IN (SELECT iBlockUserId FROM block_user_list WHERE iBlockByUse
                   $this->db->select("ts.iTokboxSessionId AS ts_tokbox_session_id_1");
                   $this->db->select("p.iImpressionCount AS p_impression_count");
                   $this->db->select("p.*, DATE_ADD(p.dAddedDate, INTERVAL 48 HOUR) AS expire_date");
-                  $this->db->where("DATE_ADD(p.dAddedDate, INTERVAL 48 HOUR) >= NOW()");
+                //   $this->db->where("DATE_ADD(p.dAddedDate, INTERVAL 48 HOUR) >= NOW()");
                   $this->db->select("(" . $this->db->escape("0") . ") AS comment_count_1", FALSE);
                   $this->db->select("(" . $this->db->escape("0") . ") AS likes_count_1", FALSE);
                   $this->db->select("(" . $this->db->escape("0") . ") AS shared_count_1", FALSE);
@@ -2379,7 +2399,10 @@ AND p.iUserId NOT IN (SELECT iBlockUserId FROM block_user_list WHERE iBlockByUse
                   $settings_params['prev_page'] = ($current_page > 1) ? 1 : 0;
                   $settings_params['next_page'] = ($current_page + 1 > $total_pages) ? 0 : 1;
 
-                  $this->db->order_by("ISNULL(distance_kms) ASC,distance_kms ASC, p.iPostId DESC", FALSE, FALSE);
+                // make changes here on 23-06-26
+                //   $this->db->order_by("ISNULL(distance_kms) ASC,distance_kms ASC, p.iPostId DESC", FALSE, FALSE);
+                  $this->db->order_by("p.dModifiedDate DESC, ISNULL(distance_kms) ASC, distance_kms ASC, p.iPostId DESC", FALSE, FALSE);
+
                   $this->db->limit($record_limit, $start_index);
                   $result_obj = $this->db->get();
                   $result_arr = is_object($result_obj) ? $result_obj->result_array() : array();
@@ -3381,7 +3404,7 @@ AND  p.iUserId NOT IN( SELECT iUserId  FROM user_followers WHERE iFollowerId = '
 
 
       //search Post using keyword for website
-      public function search_post($keyword) {
+      public function search_post(string $keyword) {
             try {
                 $result_arr = array();
                 $this->db->start_cache();
@@ -3428,4 +3451,14 @@ AND  p.iUserId NOT IN( SELECT iUserId  FROM user_followers WHERE iFollowerId = '
             $this->db->_reset_all();
             return $result_arr;
       }
+
+
+
+    //update the _dmodifieddate forcefully
+    public function update_modifieddate_forcefully(int $post_id)
+    {
+        $this->db->set('dModifiedDate', 'NOW()', false);
+        $this->db->where('iPostId', $post_id);
+        $this->db->update('post');
+    }
 }
