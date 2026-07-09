@@ -441,6 +441,10 @@ class User extends Cit_Controller
                 throw new Exception("Password does not match");
             }
 
+            if (!empty($_POST['websiteUrl'])) {
+                throw new Exception('Spam detected.');
+            }
+
             $params['user_name'] = $post_arr['vName'];
             $params['user_email'] = $post_arr['vEmail'];
             $params['password'] = $post_arr['vPassword'];

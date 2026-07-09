@@ -21,13 +21,30 @@ class Add_post_media_laravel extends Cit_Controller
 
     public function insert_post_media()
     {
-        $postId = $this->input->get_post('post_id');
-        $user_id = $this->input->get_post('user_id');
-        $uploadedFile = $this->input->get_post('upload_file');
-        $file_type = $this->input->get_post('file_type');
-        $video_thumbnail = $this->input->get_post('video_thumbnail');
-        $width = $this->input->get_post('width');
-        $height = $this->input->get_post('height');
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization");
+        $rawInput = file_get_contents('php://input');
+        $json = json_decode($rawInput, true);
+
+        if (is_array($json)) {
+            $postId = $json['post_id'] ?? null;
+            $user_id = $json['user_id'] ?? null;
+            $uploadedFile = $json['upload_file'] ?? null;
+            $file_type = $json['file_type'] ?? null;
+            $video_thumbnail = $json['video_thumbnail'] ?? null;
+            $width = $json['width'] ?? null;
+            $height = $json['height'] ?? null;
+        } else {
+            // fallback to form-data
+            $postId = $this->input->get_post('post_id');
+            $user_id = $this->input->get_post('user_id');
+            $uploadedFile = $this->input->get_post('upload_file');
+            $file_type = $this->input->get_post('file_type');
+            $video_thumbnail = $this->input->get_post('video_thumbnail');
+            $width = $this->input->get_post('width');
+            $height = $this->input->get_post('height');
+        }
 
         if (!$postId || !$user_id) {
             $rawInput = file_get_contents('php://input');
@@ -226,13 +243,16 @@ class Add_post_media_laravel extends Cit_Controller
 
     public function insert_post()
     {
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization");
         try {
-            $user_id = $this->input->get_post('user_id');
-            $post_type = $this->input->get_post('post_type');
-            $post_text = $this->input->get_post('post_text');
-            $visibility = $this->input->get_post('visibility');
-            $post_text_emoji = $this->input->get_post('post_text_emoji');
-            $movement_id = $this->input->get_post('movement_id');
+            $user_id = $this->getInput('user_id');
+            $post_type = $this->getInput('post_type');
+            $post_text = $this->getInput('post_text');
+            $visibility = $this->getInput('visibility');
+            $post_text_emoji = $this->getInput('post_text_emoji');
+            $movement_id = $this->getInput('movement_id');
 
             if (empty($user_id)) {
                 throw new Exception("User ID is required");
@@ -280,5 +300,113 @@ class Add_post_media_laravel extends Cit_Controller
         }
 
         echo json_encode($response);
+    }
+
+    private function getInput($key)
+    {
+        static $json = null;
+
+        if ($json === null) {
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+        }
+
+        if (is_array($json) && array_key_exists($key, $json)) {
+            return $json[$key];
+        }
+
+        return $this->input->get_post($key);
+    }
+
+
+
+    public function addToPlaylist_post()
+    {
+        header('Content-Type: application/json');
+        header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+        // Read raw JSON
+        $rawInput = file_get_contents('php://input');
+        $json = json_decode($rawInput, true);
+
+        if (is_array($json)) {
+            $postId  = $json['post_id'] ?? null;
+            $user_id = $json['user_id'] ?? null;
+        } else {
+            // fallback to form-data
+            $postId  = $this->input->get_post('post_id');
+            $user_id = $this->input->get_post('user_id');
+        }
+
+        // Debug (optional, remove later)
+        // echo json_encode(['debug' => [$postId, $user_id]]); exit;
+
+        if (!$user_id) {
+            echo json_encode([
+                "success" => false,
+                "message" => "User not authenticated"
+            ]);
+            return;
+        }
+
+        if (!$postId) {
+            echo json_encode([
+                "success" => false,
+                "message" => "Missing post_id"
+            ]);
+            return;
+        }
+
+        $this->load->model('Playlist_model');
+
+        $playlist = $this->Playlist_model->get_playlists_by_userId($user_id);
+
+        if (!empty($playlist)) {
+            $playlist_id = $playlist[0]['id'];
+        } else {
+            $data = [
+                'user_id'    => $user_id,
+                'name'       => 'My Playlist',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $playlist_id = $this->Playlist_model->insert_playlist($data);
+
+            if (!$playlist_id) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Failed to create playlist"
+                ]);
+                return;
+            }
+        }
+
+        // Prevent duplicate
+        $exists = $this->db->get_where('playlist_posts', [
+            'playlist_id' => $playlist_id,
+            'post_id'     => $postId
+        ])->row();
+
+        if ($exists) {
+            echo json_encode([
+                "success" => true,
+                "message" => "Already added"
+            ]);
+            return;
+        }
+
+        $success = $this->Playlist_model->insert_playlist_post([
+            'playlist_id' => $playlist_id,
+            'post_id'     => $postId,
+        ]);
+
+        echo json_encode([
+            "success" => $success,
+            "message" => $success 
+                ? "Added to playlist" 
+                : "Insert failed"
+        ]);
     }
 }

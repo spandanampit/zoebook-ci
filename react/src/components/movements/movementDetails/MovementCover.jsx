@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Maximize2, X, ImageOff } from "lucide-react";
+import ModalPortal from "../../common/ModalPortal";
 
 const MovementCover = ({ cover, title, isLoading }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -43,6 +44,7 @@ const MovementCover = ({ cover, title, isLoading }) => {
             </div>
 
             {isOpen && (
+                <ModalPortal>
                 <div
                     className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 md:p-10 mb-0"
                     onClick={() => setIsOpen(false)}
@@ -68,6 +70,7 @@ const MovementCover = ({ cover, title, isLoading }) => {
                         {title} Cover Image
                     </div>
                 </div>
+                </ModalPortal>
             )}
         </>
     );

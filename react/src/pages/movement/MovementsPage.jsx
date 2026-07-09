@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import MovementsGrid from "../components/movements/MovementsGrid";
-import useMovements from "../hooks/useMovements";
+import MovementsGrid from "../../components/movements/MovementsGrid";
+import useMovements from "../../hooks/useMovements";
 
 const MovementsPage = () => {
     const {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { AddMovementSection } from "../components/movements/addMovement";
-import { fetchMovementDetailsAPI } from "../services/movementService";
+import { AddMovementSection } from "../../components/movements/addMovement";
+import { fetchMovementDetailsAPI } from "../../services/movementService";
 
 const EditMovementPage = () => {
     const { movementId } = useParams();

@@ -40,9 +40,10 @@
             <button 
                 id="follow-user"
                 data-userid="<%$musicDetail[0]['iUserId']%>"
+                data-myid = "<%$userId%>"
                 data-state="follow"
                 class="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-all py-4 rounded-2xl font-bold shadow-xl shadow-indigo-100 active:scale-[0.98]">
-                Follow
+                <%$following_status%>
             </button>
 
           <!--<button class="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 py-4 rounded-2xl font-bold border border-slate-200 transition-all">
@@ -177,14 +178,19 @@ $(document).on("click", "#follow-user", function () {
 
     const btn = this;
     const userId = $(btn).data("userid");
+    const myId = $(btn).data("myid");
     const prevState = btn.dataset.state;
 
     btn.disabled = true;
     btn.style.opacity = '0.7';
 
-    let url = "<%$this->url->make('home/home/followUser')%>";
+    let url = "<%$this->url->make('home/home/followuser_action')%>";
     let formData = new FormData();
-    formData.append('user_follow_request_id', userId);
+    formData.append('followid', userId);
+    formData.append('userid', myId);
+    formData.append('pendingrequestid', '');
+    formData.append('pendingrequestid_ar', '');
+    formData.append('btnactval', 'follow');
 
     $.ajax({
         url: url,

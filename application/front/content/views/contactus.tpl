@@ -64,10 +64,10 @@
       </div>
       <div class="col-lg-8">
         <div class="contact-form">
-          <form class="row g-3">
+            <form class="row g-3" method="POST" action="<%$this->url->make('content/content/contactus')%>">
             <div class="col-md-6">
               <label class="vContactName"><%$first_name%></label>
-              <input type="text" class="form-control" id="vContactName" name="vContactName" placeholder="<%$first_name%>">
+              <input type="text" class="form-control" id="vContactName" name="vContactName" placeholder="<%$first_name%>" required>
               <div class="error-msg-form" id='vContactNameErr'></div>
             </div>
             <div class="col-md-6">
@@ -76,7 +76,7 @@
             </div>
             <div class="col-md-6">
               <label class="vContactEmail"><%$email%></label>
-              <input type="email" class="form-control email-input" id="vContactEmail" name="vContactEmail" aria-describedby="emailHelp" placeholder="john@zoebook.com">
+              <input type="email" class="form-control email-input" id="vContactEmail" name="vContactEmail" aria-describedby="emailHelp" placeholder="john@zoebook.com" required>
               <div class="error-msg-form" id='vContactEmailErr'></div>
             </div>
             <div class="col-md-6">
@@ -89,12 +89,16 @@
                 <div class="error-msg-form" id='vContactMessageErr'></div>
             </div>
 
+            <input type="text" class="form-control d-none" placeholder="website url" name="webUrl">
+            
+
             <div class="g-recaptcha" data-sitekey="<%$this->config->item('GOOGLE_CAPTCHA_SITE_KEY')%>"></div>
             <div style="padding-bottom:10px;"></div>
 
             <div class="col-12">
               <button type="submit" class="btn btn-primary form-btn w-100" id="submitcontact" name="submitcontact"><%$submit%></button>
             </div>
+
           </form>
         </div>
       </div>
