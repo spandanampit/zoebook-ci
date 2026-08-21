@@ -11,9 +11,8 @@ export async function fetchMovementsAPI(pageIndex) {
     return response.json();
 }
 
-export async function fetchProfileAPI(profileUserId) {
-    const targetUserId = profileUserId || ACTIVE_USER_ID;
-    const url = `${API_ENDPOINTS.profile}?profile_user_id=${targetUserId}&user_id=${ACTIVE_USER_ID}`;
+export async function fetchProfileAPI() {
+    const url = `${API_ENDPOINTS.profile}?profile_user_id=${ACTIVE_USER_ID}&user_id=${ACTIVE_USER_ID}`;
     const response = await fetch(url);
 
     if (!response.ok) {

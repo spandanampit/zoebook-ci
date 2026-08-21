@@ -368,12 +368,10 @@ body {
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
                 <ul class="navbar-nav mx-auto mb-lg-0">
                     <li class="nav-item">
-                        <!--<a href="<%$this->config->item('site_url')%>home.html"><%$home%></a>-->
-                        <a href="https://zoebook.mydevfactory.com/reactMovement/home"><%$home%></a>
+                        <a href="<%$this->config->item('site_url')%>home.html"><%$home%></a>
                     </li>
                     <li class="nav-item">
-                        <!--<a href="<%$this->url->make('home/home/my_profile')%>" title="My Dashboard"><%$profile%></a>-->
-                        <a href="https://zoebook.mydevfactory.com/reactMovement/profile" title="My Dashboard"><%$profile%></a>
+                        <a href="<%$this->url->make('home/home/my_profile')%>" title="My Dashboard"><%$profile%></a>
                     </li>
                     <li class="nav-item">
                         <a href="<%$this->config->item('site_url')%>viral-posts.html" title="My Dashboard"><%$viral_post%></a>
@@ -382,8 +380,7 @@ body {
                         <a href="<%$this->url->make('content/content/watchvideo')%>" title="My Dashboard"><%$viral_post_plus%></a>
                     </li>    
                     <li class="nav-item vid-yellow-bg">
-                        <!--<a href="<%$this->url->make('movement/movement/index')%>" title="My Dashboard"><%$movement_name_menu%></a>-->
-                        <a href="https://zoebook.mydevfactory.com/reactMovement/popularmovement" title="My Dashboard"><%$movement_name_menu%></a>
+                        <a href="<%$this->url->make('movement/movement/index')%>" title="My Dashboard"><%$movement_name_menu%></a>
                     </li>
                 </ul>
 

@@ -1,28 +1,9 @@
 import axios from "axios";
 import { getPresignedUrls } from "../services/postService";
 
-/**
- * Core upload helper — gets a presigned URL and PUTs the file to S3.
- *
- * This is the low-level, reusable function used by every upload path.
- *
- * @param {File|Blob} file         - The file to upload.
- * @param {function}  [onProgress] - Optional upload-progress callback (0-100).
- * @returns {Promise<string>} The public file URL (e.g. CloudFront URL).
- */
-export async function uploadFileToS3(file, typeOrProgress, onProgressArg) {
+export async function uploadVideoToS3(file, onProgress) {
     if (!file) {
         throw new Error("No file provided for upload.");
-    }
-
-    // Handle polyfill for old signature: (file, onProgress)
-    let type = "post";
-    let onProgress = onProgressArg;
-
-    if (typeof typeOrProgress === "string") {
-        type = typeOrProgress;
-    } else if (typeof typeOrProgress === "function") {
-        onProgress = typeOrProgress;
     }
 
     let presignedData;
@@ -30,7 +11,6 @@ export async function uploadFileToS3(file, typeOrProgress, onProgressArg) {
         presignedData = await getPresignedUrls({
             fileName: file.name,
             fileType: file.type,
-            type: type,
         });
     } catch (error) {
         console.error("Failed to get presigned URL for S3 upload:", error);
@@ -77,18 +57,4 @@ export async function uploadFileToS3(file, typeOrProgress, onProgressArg) {
     }
 
     return fileUrl;
-}
-
-/**
- * Upload a video (or any file) to S3 — backwards-compatible wrapper.
- *
- * Existing call-sites that import `uploadVideoToS3` keep working with
- * zero changes.
- *
- * @param {File}     file         - The file to upload.
- * @param {function} [onProgress] - Optional progress callback (0-100).
- * @returns {Promise<string>} The public file URL.
- */
-export async function uploadVideoToS3(file, onProgress) {
-    return uploadFileToS3(file, "post", onProgress);
 }

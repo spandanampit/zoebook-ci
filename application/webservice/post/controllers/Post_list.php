@@ -309,7 +309,6 @@ class Post_list extends Cit_Controller
             $device_type = isset($input_params["device_type"]) ? $input_params["device_type"] : "";
 
             if($device_type == "web") {
-
                 $this->block_result = $this->post_model->get_my_posts_web($params_arr, $page_index, $this->settings_params);
             } else {
                 $this->block_result = $this->post_model->get_my_posts($params_arr, $page_index, $this->settings_params);
@@ -1178,7 +1177,6 @@ class Post_list extends Cit_Controller
             if(isset($input_params["profile_user_id"])){
                 $params_arr["profile_user_id"] = $input_params["profile_user_id"];
             }
-
             $page_index = isset($input_params["page_index"]) ? $input_params["page_index"] : 1;
             $this->block_result = $this->post_model->get_user_posts($params_arr, $page_index, $this->settings_params);
             

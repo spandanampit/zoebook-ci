@@ -962,10 +962,6 @@ class Comment_on_post extends Cit_Controller
             $params_arr["_daddeddate"] = "NOW()";
             $params_arr["_dmodifieddate"] = "NOW()";
             $params_arr["_estatus"] = "Active";
-
-            // updating the _dmodifieddate forcefully
-            $this->post_model->update_modifieddate_forcefully($input_params["post_id"]);
-
             if (isset($images_arr["upload_file"]["name"]))
             {
                 $params_arr["upload_file"] = $images_arr["upload_file"]["name"];

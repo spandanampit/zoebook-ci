@@ -226,9 +226,6 @@ $route['WS/random_reels'] = "post/other_post/random_reels";
 $route['WS/insert_post'] = "post/add_post_media_laravel/insert_post";
 
 
-$route['WS/addToPlaylist_post'] = "post/add_post_media_laravel/addToPlaylist_post";
-$route['WS/update_user_profile'] = 'user/user_api/updateUserProfile';
-
 
 //Playlist APIs
 $route['WS/get_my_playlist'] = "post/playlist/get_my_playlist";
@@ -243,14 +240,6 @@ $route['WS/get_musics'] = "post/music_post/get_musics";
 $route['WS/get_user_music'] = "post/music_post/get_user_music";
 $route['WS/get_music_post'] = "post/music_post/get_music_post";
 $route['WS/get_users'] = "post/music_post/get_users";
-$route['WS/upload_music_posts'] = "post/music_post/uploadMusic";
-
-$route['WS/get_videos_new'] = "post/music_post/get_watch_video";
-
-//for watch videos
-$route['WS/get_videos'] = "post/watch_video/get_watch_video";
-
-
 
 
 // third-party login    
@@ -300,7 +289,6 @@ $route['popularmovementvtwo'] = 'movement/movement/popularmovementvtwo';
 
 //new created route react
 $route['reactMovement'] = 'movement/movement/reactMovement';
-$route['reactMovement/(:any)'] = 'movement/movement/reactMovement';
 
 
 //$route['content/(:any)'] = "content/content/staticpage/$1";

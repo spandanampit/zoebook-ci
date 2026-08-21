@@ -146,6 +146,7 @@ class Like_post_media extends Cit_Controller
 
                 else
                 {
+
                     $condition_res = $this->check_post_media_condition($input_params);
                     if ($condition_res["success"])
                     {
@@ -166,10 +167,6 @@ class Like_post_media extends Cit_Controller
                             $input_params = $this->update_post_media_likes($input_params);
 
                             $output_response = $this->post_media_finish_success($input_params);
-
-                            //adding the changes here for like man
-                            $this->post_model->update_modifieddate_forcefully((int)$input_params['pm_post_id']);
-
                             return $output_response;
                         }
 
@@ -185,8 +182,6 @@ class Like_post_media extends Cit_Controller
                             $input_params = $this->get_liked_user_details_v1($input_params);
 
                             $condition_res = $this->is_not_same_user($input_params);
-
-
                             if ($condition_res["success"])
                             {
 
@@ -214,6 +209,7 @@ class Like_post_media extends Cit_Controller
 
                     else
                     {
+
                         $output_response = $this->post_media_finish_success_1($input_params);
                         return $output_response;
                     }

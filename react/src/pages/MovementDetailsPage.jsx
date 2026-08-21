@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import MovementCover from "../../components/movements/movementDetails/MovementCover";
-import MovementInfo from "../../components/movements/movementDetails/MovementInfo";
-import MovementPosts from "../../components/movements/movementDetails/MovementPosts";
-import MovementRightPanel from "../../components/movements/movementDetails/MovementRightPanel";
+import MovementCover from "../components/movements/movementDetails/MovementCover";
+import MovementInfo from "../components/movements/movementDetails/MovementInfo";
+import MovementPosts from "../components/movements/movementDetails/MovementPosts";
+import MovementRightPanel from "../components/movements/movementDetails/MovementRightPanel";
 import {
     fetchMovementDetailsAPI,
     toggleJoinMovementAPI,
     fetchMovementPosts,
-} from "../../services/movementService";
-import { likePostMedia } from "../../services/postService";
-import { useCreateMovementPost } from "../../hooks/useCreateMovementPost";
+} from "../services/movementService";
+import { likePostMedia } from "../services/postService";
 
 const MovementDetailsPage = () => {
     const [details, setDetails] = useState(null);
@@ -203,16 +202,6 @@ const MovementDetailsPage = () => {
         },
         [movementId],
     );
-
-    // ── Upload hook (shared between MovementInfo + MovementPosts) ──────
-    const { submitPost, isSubmitting, uploadProgress } =
-        useCreateMovementPost({
-            movementId,
-            onSuccess: () => {
-                // Refresh the posts feed after a successful upload
-                loadPostsPage(1, { append: false });
-            },
-        });
 
     useEffect(() => {
         if (!movementId) {
@@ -430,9 +419,6 @@ const MovementDetailsPage = () => {
                     movement={details}
                     isLoading={isLoading}
                     error={error}
-                    submitPost={submitPost}
-                    isSubmitting={isSubmitting}
-                    uploadProgress={uploadProgress}
                 />
 
                 <MovementPosts
@@ -444,8 +430,6 @@ const MovementDetailsPage = () => {
                     sentinelRef={postsSentinelRef}
                     likingMediaKeys={likingMediaKeys}
                     onToggleMediaLike={handleToggleMediaLike}
-                    isUploading={isSubmitting}
-                    uploadProgress={uploadProgress}
                 />
             </div>
 

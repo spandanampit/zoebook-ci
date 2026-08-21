@@ -3,7 +3,6 @@ import { Heart, MessageCircle, Share2, Eye } from "lucide-react";
 import { decodeEscapedText } from "../../../utils/textDecoder";
 import { fetchCommentList, postComment } from "../../../services/commentService";
 import MovementComments from "./MovementComments";
-import UploadProgressCard from "./UploadProgressCard";
 
 const PostSkeleton = () => (
     <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 animate-pulse">
@@ -60,8 +59,6 @@ const MovementPosts = ({
     sentinelRef = null,
     likingMediaKeys = {},
     onToggleMediaLike,
-    isUploading = false,
-    uploadProgress = 0,
 }) => {
     const [openComments, setOpenComments] = useState({});
     const [commentsByKey, setCommentsByKey] = useState({});
@@ -202,14 +199,8 @@ const MovementPosts = ({
 
     if (!posts.length) {
         return (
-            <div className="space-y-6 max-w-md mx-auto">
-                <UploadProgressCard
-                    progress={uploadProgress}
-                    visible={isUploading}
-                />
-                <div className="bg-white rounded-[2rem] border border-gray-100 p-8 text-center text-gray-500 font-semibold">
-                    No posts found for this movement.
-                </div>
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 text-center text-gray-500 font-semibold">
+                No posts found for this movement.
             </div>
         );
     }
@@ -220,11 +211,6 @@ const MovementPosts = ({
                 hasOpenComments ? "max-w-5xl" : "max-w-md"
             }`}
         >
-            {/* Upload Progress Card */}
-            <UploadProgressCard
-                progress={uploadProgress}
-                visible={isUploading}
-            />
             {/* Max-width ensures vertical posts don't look huge on desktop */}
             {posts.map((post, index) => {
                 const media = getMediaForPost(post);

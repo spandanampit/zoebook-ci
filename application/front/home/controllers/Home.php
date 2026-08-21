@@ -292,7 +292,6 @@ class Home extends Cit_Controller
             $params['device_type'] = "web";
             // pr($params,1);
             $api_resp = $this->cit_api_model->callAPI("post_list", $params);
-            // echo json_encode($api_resp);die;
         }
         /* if ($api_resp['settings']['success'] == 0) {
             throw new Exception($api_resp['settings']['message']);
@@ -745,7 +744,6 @@ class Home extends Cit_Controller
                     "page_index" => 1,
                 );
                 $posts_api_resp = $this->getPosts($posts_params);
-                // echo json_encode($posts_api_resp);die;
 
                 if ($posts_api_resp['settings']['success'] == 0) {
                     throw new Exception($api_resp['settings']['message']);

@@ -734,9 +734,6 @@ class Content extends Cit_Controller
             'recent_videos' => $recent_videos,
             'vp_video' => $random_video,
         ];
-
-echo json_encode($data);
-die;
         $this->smarty->assign($data);
     }
 
@@ -747,13 +744,6 @@ die;
 
         if ($postArr) {
             try {
-
-                // echo json_encode($postArr);die;
-                if(!isset($_POST['webUrl'])) {
-                    echo "Not Allowed";
-                    die;
-                }
-
                 if (isset($_POST['g-recaptcha-response'])) {
                     $captcha = $_POST['g-recaptcha-response'];
                 }
@@ -765,70 +755,22 @@ die;
                 $url =  'https://www.google.com/recaptcha/api/siteverify?secret=' . urlencode($secretKey) . '&response=' . urlencode($captcha);
                 $response = file_get_contents($url);
                 $responseKeys = json_decode($response, true);
-                // if ($responseKeys["success"]) {
-                //     $params = array();
-                //     $params['name'] = $postArr['vContactName'];
-                //     $params['email'] = $postArr['vContactEmail'];
-                //     $params['message_text'] = $postArr['vContactMessage'];
-                //     $api_resp = $this->cit_api_model->callAPI("contact_us_submit", $params);
-
-                //     if ($api_resp['settings']['success'] == '1') {
-                //         $this->session->set_flashdata('success', $api_resp['settings']['message']);
-                //     } else {
-                //         throw new Exception($api_resp['settings']['message']);
-                //     }
-
-                //     $redirect_url = $this->config->item('site_url') . "contactus.html";
-                //     redirect($redirect_url);
-                // } else {
-                //     throw new Exception("Invalid Request");
-                // }
-
-
                 if ($responseKeys["success"]) {
                     $params = array();
                     $params['name'] = $postArr['vContactName'];
                     $params['email'] = $postArr['vContactEmail'];
                     $params['message_text'] = $postArr['vContactMessage'];
-
-                    $url = "https://zoebook.mydevfactory.com/WS/contact_us_submit";
-
-                    $ch = curl_init();
-
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch, CURLOPT_POST, true);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                        'Content-Type: application/json',
-                        'X-API-KEY: wertyuiozxcb'
-                    ));
-
-                    $response = curl_exec($ch);
-
-                    curl_close($ch);
-
-                    $api_resp = json_decode($response, true);
+                    $api_resp = $this->cit_api_model->callAPI("contact_us_submit", $params);
 
                     if ($api_resp['settings']['success'] == '1') {
-
-                        $this->session->set_flashdata(
-                            'success',
-                            $api_resp['settings']['message']
-                        );
-
+                        $this->session->set_flashdata('success', $api_resp['settings']['message']);
                     } else {
-
                         throw new Exception($api_resp['settings']['message']);
                     }
 
                     $redirect_url = $this->config->item('site_url') . "contactus.html";
-
                     redirect($redirect_url);
-
                 } else {
-
                     throw new Exception("Invalid Request");
                 }
             } catch (Exception $e) {

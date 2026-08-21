@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Camera, Globe, Lock, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
     createMovement,
     updateMovement,
@@ -176,7 +177,7 @@ const MovementForm = ({
 
     return (
         <section className="rounded-[2rem] border border-white bg-gradient-to-br from-[#fff7ef] via-white to-[#fff2f7] shadow-xl shadow-orange-100/60">
-
+            <ToastContainer position="top-right" />
             <div className="px-6 py-8 sm:px-8 lg:px-10">
                 <div className="mb-8">
                     <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">

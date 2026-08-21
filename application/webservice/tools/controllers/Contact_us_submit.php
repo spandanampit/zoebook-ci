@@ -102,23 +102,6 @@ class Contact_us_submit extends Cit_Controller
         try
         {
             $validation_res = $this->rules_contact_us_submit($request_arr);
-
-            $headers = getallheaders();
-
-            $apiKey = $headers['X-API-KEY'] ?? '';
-
-            if ($apiKey !== 'em9lYm9va0BqZWFuTHViaW4=') {
-
-                http_response_code(401);
-
-                echo json_encode([
-                    'success' => 0,
-                    'message' => 'Access Denied'
-                ]);
-
-                exit;
-            }
-
             if ($validation_res["success"] == "-5")
             {
                 if ($inner_api === TRUE)

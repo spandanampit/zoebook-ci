@@ -497,10 +497,6 @@ class Like_post extends Cit_Controller
                 $params_arr["user_id"] = $input_params["user_id"];
             }
             $params_arr["_daddeddate"] = "NOW()";
-
-            //updating the modifiedDate
-            $this->post_model->update_modifieddate_forcefully($input_params["post_id"]);
-
             $this->block_result = $this->post_like_model->insert_like($params_arr);
         }
         catch(Exception $e)
@@ -1086,7 +1082,4 @@ class Like_post extends Cit_Controller
 
         return $responce_arr;
     }
-
-
-
 }

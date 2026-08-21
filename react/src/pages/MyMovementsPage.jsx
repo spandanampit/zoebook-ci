@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import MovementsGrid from "../../components/movements/MovementsGrid";
-import useMyMovements from "../../hooks/useMyMovements";
-import { ACTIVE_USER_ID } from "../../config/siteConfig";
-import { deactivateMovement } from "../../services/movementService";
-import ModalPortal from "../../components/common/ModalPortal";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import MovementsGrid from "../components/movements/MovementsGrid";
+import useMyMovements from "../hooks/useMyMovements";
+import { ACTIVE_USER_ID } from "../config/siteConfig";
+import { deactivateMovement } from "../services/movementService";
 
 const MyMovementsPage = () => {
     const {
@@ -157,7 +157,7 @@ const MyMovementsPage = () => {
 
     return (
         <>
-
+            <ToastContainer position="top-right" />
             <MovementsGrid
                 items={items}
                 isInitialLoading={isInitialLoading}
@@ -172,7 +172,6 @@ const MyMovementsPage = () => {
             />
 
             {pendingStatusChange ? (
-                <ModalPortal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
                     <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
                         <h3 className="text-lg font-bold text-slate-800">
@@ -222,7 +221,6 @@ const MyMovementsPage = () => {
                         </div>
                     </div>
                 </div>
-                </ModalPortal>
             ) : null}
         </>
     );

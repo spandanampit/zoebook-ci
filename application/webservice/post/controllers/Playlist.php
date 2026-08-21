@@ -141,11 +141,6 @@ class Playlist extends Cit_Controller {
 
 
     public function get_top_playlist() {
-
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
         $page_index = $this->input->get_post('page_index');
         $user_id = $this->input->get_post('user_id');
         if (!$page_index) {

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from "react";
 import { X, UploadCloud, Loader2 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import ModalPortal from "../../../common/ModalPortal";
 
 const CreateMovementPostModal = ({
     isOpen,
@@ -50,7 +49,6 @@ const CreateMovementPostModal = ({
     return (
         <AnimatePresence>
             {isOpen && (
-                <ModalPortal>
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 mb-0">
                     <Motion.div
                         initial={{ opacity: 0 }}
@@ -181,7 +179,6 @@ const CreateMovementPostModal = ({
                         </div>
                     </Motion.div>
                 </div>
-                </ModalPortal>
             )}
         </AnimatePresence>
     );
